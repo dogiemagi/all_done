@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 250px;
+            background-color: #007BFF;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            padding-top: 60px;
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: #0056b3;
+        }
+
+        /* Sidebar toggle button */
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #0056b3;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1001;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #004085;
+        }
+
+        /* Header styling */
+        .navbar {
+            background-color: #007BFF;
+            padding: 40px 300px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 998;
+        }
+
+        .navbar h1 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 24px;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .navbar a {
+            position: absolute;
+            right: 30px;
+            top: 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            background-color: #0056b3;
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .navbar a:hover {
+            background-color: #004085;
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            width: 100%;
+            transition: margin-left 0.3s;
+        }
+
+        .main-content.full {
+            margin-left: 0;
+        }
+
+        /* Dashboard content */
+        .dashboard {
+            margin-top: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .dashboard h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .dashboard p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .dashboard ul {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .dashboard ul li {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .dashboard button {
+            background-color: #007BFF;
+            padding: 15px 25px;
+            font-size: 16px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .dashboard button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Flash message styling */
+        .flash-messages {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 1000;
+        }
+
+        .flash-message {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <a href="/admin/add_doctor_form" onclick="handleSidebarClick(event, '/admin/add_doctor_form')">
+            <i class="fas fa-user-plus"></i> Add Doctor
+        </a>
+        <a href="/admin/add_patient_form" onclick="handleSidebarClick(event, '/admin/add_patient_form')">
+            <i class="fas fa-user-injured"></i> Add Patient
+        </a>
+        <a href="/admin/add_labadmin" onclick="handleSidebarClick(event, '/admin/add_labadmin')">
+            <i class="fas fa-user-shield"></i> Add Lab Admin
+        </a>
+
+        <a href="#" onclick="loadContent('/admin/view_doctors')"><i class="fas fa-users"></i> View Doctors</a>
+        <a href="#" onclick="loadContent('/admin/view_patients')"><i class="fas fa-users"></i> View Patients</a>
+        <a href="#" onclick="loadContent('/admin/view_labadmins')"><i class="fas fa-users-cog"></i> View Lab Admins</a>
+
+        <a href="#" onclick="loadContent('/admin/medical-records')"><i class="fas fa-file-medical"></i> View Patient Medical Records</a>
+
+        <a href="/admin/delete_doctors" onclick="handleSidebarClick(event, '/admin/delete_doctors')">
+            <i class="fas fa-user-times"></i> Delete Doctors
+        </a>
+        <a href="/admin/delete_labadmins" onclick="handleSidebarClick(event, '/admin/delete_labadmins')">
+            <i class="fas fa-user-minus"></i> Delete Lab Admins
+        </a>
+        <a href="/admin/deactivate_patients" onclick="handleSidebarClick(event, '/admin/deactivate_patients')">
+            <i class="fas fa-user-slash"></i> Deactivate Patients
+        </a>
+        <a href="/admin/activate_patients" onclick="handleSidebarClick(event, '/admin/activate_patients')">
+            <i class="fas fa-user-check"></i> Activate Patients
+        </a>
+        
+        
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <!-- Header -->
+        <div class="navbar">
+            <h1>Admin Dashboard</h1>
+            <a href="/logout">Logout</a>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Dashboard -->
+        <div class="dashboard" id="dynamic-content">
+            <h2>Welcome, Admin! 👋</h2>
+            <p>Here’s a quick overview of your tasks: 🚀</p>
+            <ul>
+                <li>🔹 Manage doctors, patients, and lab admins.</li>
+                <li>🔹 Track medical records securely.</li>
+                <li>🔹 Get quick insights at a glance.</li>
+            </ul>
+            <p>Explore the options in the sidebar to get started. 🖥️</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            sidebar.classList.toggle('hidden');
+            mainContent.classList.toggle('full');
+        }
+
+        function loadContent(url) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load content');
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    document.getElementById('dynamic-content').innerHTML = html;
+
+                    // Highlight the active menu
+                    document.querySelectorAll('.sidebar a').forEach(link => link.classList.remove('active'));
+                    document.querySelectorAll('.sidebar a').forEach(link => {
+                        if (link.getAttribute('onclick').includes(url)) {
+                            link.classList.add('active');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading content:', error);
+                    document.getElementById('dynamic-content').innerHTML = `<p style="color:red;">Failed to load content.</p>`;
+                });
+        }
+    </script>
+
+</body>
+</html>

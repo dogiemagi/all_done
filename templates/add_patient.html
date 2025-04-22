@@ -1,0 +1,214 @@
+<div class="add-patient-container">
+    <style>
+        .add-patient-container {
+            font-family: Arial, sans-serif;
+            background-color: #eef2f3;
+            padding: 20px;
+        }
+        .add-patient-container .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        .add-patient-container h2 {
+            text-align: center;
+            color: #333;
+        }
+        .add-patient-container .form-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .add-patient-container .form-group label {
+            flex: 1;
+            color: #555;
+            margin-right: 10px;
+        }
+        .add-patient-container .form-group input,
+        .add-patient-container .form-group select {
+            flex: 2;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .add-patient-container button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .add-patient-container button:hover {
+            background-color: #0056b3;
+        }
+        .add-patient-container .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .add-patient-container .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .add-patient-container .back-link a:hover {
+            text-decoration: underline;
+        }
+        .flash-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .error-message {
+            color: red;
+            font-size: 12px;
+            padding-left: 10px;
+        }
+    </style>
+
+    <div class="container">
+        <h2>Add Patient</h2>
+
+        <!-- Flash Message -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message {{ 'flash-success' if 'success' in message.lower() else 'flash-error' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/admin/add_patient">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                <span class="error-message" id="name-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" required>
+                <span class="error-message" id="age-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" required>
+                    <option value="">-- Select Gender --</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="contact">Contact:</label>
+                <input type="text" id="contact" name="contact" required>
+                <span class="error-message" id="contact-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Login Username (Auto-generated):</label>
+                <input type="text" id="username" name="username" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Login Password:</label>
+                <input type="password" id="password" name="password" required>
+                <span class="error-message" id="passwordError"></span>
+            </div>
+
+            <button type="submit">Add Patient</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/admin/dashboard">← Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-generate username based on name input
+    document.getElementById("name").addEventListener("input", function () {
+        var name = this.value.trim();
+        if (name.length > 0) {
+            fetch(`/generate_username?name=${name}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("username").value = data.username;
+                });
+        } else {
+            document.getElementById("username").value = '';
+        }
+    });
+
+    // Form validation on submit
+    document.querySelector("form").addEventListener("submit", function (event) {
+        let valid = true;
+
+        const name = document.getElementById("name").value.trim();
+        const age = document.getElementById("age").value.trim();
+        const contact = document.getElementById("contact").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        const nameError = document.getElementById("name-error");
+        const ageError = document.getElementById("age-error");
+        const contactError = document.getElementById("contact-error");
+        const passwordError = document.getElementById("passwordError");
+
+        nameError.textContent = "";
+        ageError.textContent = "";
+        contactError.textContent = "";
+        passwordError.textContent = "";
+
+        const nameRegex = /^[A-Za-z\s]+$/;
+        if (!nameRegex.test(name)) {
+            nameError.textContent = "Only letters and spaces allowed.";
+            valid = false;
+        }
+
+        const ageNum = Number(age);
+        if (isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+            ageError.textContent = "Enter a valid age (1–120).";
+            valid = false;
+        }
+
+        const contactRegex = /^[6-9]\d{9}$/;
+        if (!contactRegex.test(contact)) {
+            contactError.textContent = "Enter a valid 10-digit Indian number.";
+            valid = false;
+        }
+
+        if (password === "") {
+            passwordError.textContent = "Password is required.";
+            valid = false;
+        } else if (password.length < 6 || password.length > 10) {
+            passwordError.textContent = "Password must be 6–10 characters long.";
+            valid = false;
+        }
+
+        if (!valid) {
+            event.preventDefault();
+        }
+    });
+</script>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Details</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            padding: 40px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: auto;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .back-btn {
+            display: block;
+            width: 180px;
+            margin: 30px auto 0;
+            padding: 12px;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background-color: #0056b3;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        label {
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Patient Details</h2>
+
+    <!-- Filter Form -->
+    <form method="get" action="{{ url_for('view_patients') }}">
+        <label for="status">Filter by Status:</label>
+        <select name="status" id="status" onchange="this.form.submit()">
+            <option value="all" {% if selected_status=='all' %}selected{% endif %}>All</option>
+            <option value="active" {% if selected_status=='active' %}selected{% endif %}>Active</option>
+            <option value="deactive" {% if selected_status=='deactive' %}selected{% endif %}>Deactive</option>
+        </select>
+    </form>
+
+    <!-- Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Contact</th>
+                <th>Username</th>
+                <th>Password (Hashed)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pat in patients %}
+            <tr>
+                <td>{{ pat['id'] }}</td> <!-- ID -->
+                <td>{{ pat['name'] }}</td> <!-- Name -->
+                <td>{{ pat['age'] }}</td> <!-- Age -->
+                <td>{{ pat['gender'] }}</td> <!-- Gender -->
+                <td>{{ pat['contact'] }}</td> <!-- Contact -->
+                <td>{{ pat['username'] }}</td> <!-- Username -->
+                <td>******</td> <!-- Password (Hashed) -->
+                <td>{{ pat['status'] }}</td> <!-- Status -->
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="/admin/dashboard" class="back-btn">← Back to Dashboard</a>
+</body>
+
+</html>

@@ -1,0 +1,217 @@
+<div class="add-labadmin-container">
+    <style>
+        .add-labadmin-container {
+            font-family: Arial, sans-serif;
+            background-color: #eef2f3;
+            padding: 20px;
+        }
+
+        .add-labadmin-container .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-labadmin-container h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .add-labadmin-container .form-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .add-labadmin-container .form-group label {
+            flex: 1;
+            color: #555;
+            margin-right: 10px;
+        }
+
+        .add-labadmin-container .form-group input {
+            flex: 2;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .add-labadmin-container button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .add-labadmin-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .add-labadmin-container .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .add-labadmin-container .back-link a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+
+        .add-labadmin-container .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .flash-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+        }
+    </style>
+
+    <div class="container">
+        <h2>Add Lab Admin</h2>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="flash-message {{ 'flash-success' if 'success' in message.lower() else 'flash-error' }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/admin/add_labadmin">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" value="{{ form_data.name if form_data and form_data.name }}"
+                    required>
+                <span class="error-message" id="nameError"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="specialization">Lab Specialization:</label>
+                <input type="text" id="specialization" name="specialization"
+                    value="{{ form_data.specialization if form_data and form_data.specialization }}" required>
+                <span class="error-message" id="specializationError"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone" value="{{ form_data.phone if form_data and form_data.phone }}"
+                    required>
+                <span class="error-message" id="phoneError"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username"
+                    value="{{ form_data.username if form_data and form_data.username }}" required>
+                <span class="error-message" id="usernameError"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <span class="error-message" id="passwordError"></span>
+            </div>
+
+            <button type="submit">Add Lab Admin</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/admin/dashboard">← Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function (e) {
+        let isValid = true;
+
+        // Clear previous error messages
+        document.getElementById("nameError").innerText = "";
+        document.getElementById("phoneError").innerText = "";
+        document.getElementById("usernameError").innerText = "";
+        document.getElementById("passwordError").innerText = "";
+        document.getElementById("specializationError").innerText = "";
+
+        const name = document.getElementById("name").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const specialization = document.getElementById("specialization").value.trim();
+
+        // Name validation (only alphabets and spaces)
+        const nameRegex = /^[A-Za-z ]+$/;
+        if (!nameRegex.test(name)) {
+            document.getElementById("nameError").innerText = "Name should contain only letters and spaces.";
+            isValid = false;
+        }
+
+        // Specialization validation (only alphabets and spaces)
+        const specializationRegex = /^[A-Za-z ]+$/;
+        if (!specializationRegex.test(specialization)) {
+            document.getElementById("specializationError").innerText = "Specialization should contain only letters and spaces.";
+            isValid = false;
+        }
+
+        // Phone validation (Indian format)
+        const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(phone)) {
+            document.getElementById("phoneError").innerText = "Enter a valid 10-digit Indian mobile number.";
+            isValid = false;
+        }
+
+        // Username required check
+        if (username === "") {
+            document.getElementById("usernameError").innerText = "Username is required.";
+            isValid = false;
+        }
+
+        // Password required check
+        // Password validation (required and minimum 6 characters)
+        if (password === "") {
+            document.getElementById("passwordError").innerText = "Password is required.";
+            isValid = false;
+        } else if (password.length < 6 || password.length > 10) {
+            document.getElementById("passwordError").innerText = "Password must be 6–10 characters long.";
+            isValid = false;
+        }
+
+
+
+
+        if (!isValid) {
+            e.preventDefault(); // Prevent form submission
+        }
+    });
+</script>

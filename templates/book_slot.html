@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Slot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .slot-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start; /* Now starts from LEFT */
+            gap: 15px;
+        }
+        .slot-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 300px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .slot-item a {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .slot-item a:hover {
+            background-color: #218838;
+        }
+        .back-btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-top: 30px;
+        }
+        .back-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Flash message styling */
+        .flash-message {
+            color: red; /* Red color for error message */
+            font-size: 24px; /* Same size as h2 */
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h2>Available Appointment Slots</h2>
+
+        <div class="slot-list">
+            {% for slot in slots %}
+                <div class="slot-item">
+                    <p><strong>Slot Date & Time:</strong> {{ slot.formatted_datetime }}</p> <!-- Use the formatted datetime -->
+                    <a href="{{ url_for('confirm_booking', slot_id=slot.slot_id, doctor_username=doctor_username) }}">Book</a>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-message">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <a href="{{ url_for('book_appointment') }}" class="back-btn">← Back to Select Doctor</a>
+    </div>
+</body>
+</html>

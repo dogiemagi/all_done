@@ -176,7 +176,7 @@ def doctor_view_patient():
         return redirect(url_for('doctor_dashboard'))
 
     cursor.execute("""
-        SELECT username, scan_and_report, normal_report, upload_date 
+        SELECT id, username, scan_and_report, normal_report, upload_date 
         FROM medical_records 
         WHERE username = ?
     """, (patient['username'],))

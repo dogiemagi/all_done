@@ -13,9 +13,9 @@ import cloudinary.api
 import re
 
 cloudinary.config(
-    cloud_name = 'ddwdrw1sp',
-    api_key = '592695791611253',
-    api_secret = '1lJ0R3sreBjzO8CrUOv3ZF8CPcM'
+    cloud_name = 'your_cloud_name',
+    api_key = 'you_key',
+    api_secret = 'enter_yours'
 )
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -1075,3 +1075,4 @@ def view_scan(record_id):
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=False)
+

@@ -143,10 +143,39 @@ def fetch_grouped_records():
 
 
 
+def fmt_slot(value):
+    """'2025-04-18T07:07' -> '18 Apr 2025, 7:07 AM'"""
+    try:
+        dt = datetime.strptime(value, '%Y-%m-%dT%H:%M')
+        return f"{dt.day} {dt.strftime('%b %Y')}, {dt.strftime('%I:%M %p').lstrip('0')}"
+    except (ValueError, TypeError):
+        return value
+
+
 @app.route('/doctor', methods=['GET', 'POST'])
 def doctor_dashboard():
     if 'role' in session and session['role'] == 'doctor':
-        return render_template('doctor_dashboard.html')
+        conn = get_db()
+        me = session['username']
+        today = datetime.now().strftime('%Y-%m-%d')
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M')
+        stats = {
+            'today': conn.execute("""SELECT COUNT(*) FROM appointments a JOIN doctor_slots s ON a.slot_id=s.slot_id
+                                     WHERE s.doctor_username=? AND DATE(s.slot_datetime)=?""", (me, today)).fetchone()[0],
+            'upcoming': conn.execute("""SELECT COUNT(*) FROM appointments a JOIN doctor_slots s ON a.slot_id=s.slot_id
+                                        WHERE s.doctor_username=? AND s.slot_datetime>=?""", (me, now)).fetchone()[0],
+            'open_slots': conn.execute("SELECT COUNT(*) FROM doctor_slots WHERE doctor_username=? AND is_booked=0 AND slot_datetime>=?",
+                                       (me, now)).fetchone()[0],
+            'patients': conn.execute("SELECT COUNT(*) FROM patients WHERE status='active'").fetchone()[0],
+        }
+        nxt = conn.execute("""SELECT s.slot_datetime, p.name FROM appointments a
+                              JOIN doctor_slots s ON a.slot_id=s.slot_id
+                              JOIN patients p ON a.patient_username=p.username
+                              WHERE s.doctor_username=? AND s.slot_datetime>=?
+                              ORDER BY s.slot_datetime LIMIT 1""", (me, now)).fetchone()
+        next_appt = {'when': fmt_slot(nxt['slot_datetime']), 'patient': nxt['name']} if nxt else None
+        conn.close()
+        return render_template('doctor_dashboard.html', stats=stats, next_appt=next_appt)
     flash("Unauthorized access. Please login.")    
     return redirect('/login')
 @app.route('/doctor/doctor_view_patient', methods=['GET', 'POST'])
@@ -260,7 +289,7 @@ def create_slot():
         slot_datetime_obj = datetime.strptime(slot['slot_datetime'], '%Y-%m-%dT%H:%M')
 
         # Formatting manually, removing leading zeros for day, month, and hour
-        formatted_datetime = f"{slot_datetime_obj.day}/{slot_datetime_obj.month}/{slot_datetime_obj.year} {slot_datetime_obj.strftime('%I:%M%p').lstrip('0')}"
+        formatted_datetime = fmt_slot(slot['slot_datetime'])
 
         formatted_slots.append({
             **slot,
@@ -301,7 +330,7 @@ def doctor_appointments():
     appointments = []
     for row in rows:
         dt_obj = datetime.strptime(row['slot_datetime'], '%Y-%m-%dT%H:%M')
-        formatted_datetime = f"{dt_obj.day}/{dt_obj.month}/{dt_obj.year} {dt_obj.strftime('%I:%M%p').lstrip('0')}"
+        formatted_datetime = fmt_slot(row['slot_datetime'])
         appointments.append({
             'slot_id': row['slot_id'],
             'slot_datetime': formatted_datetime,
@@ -339,8 +368,38 @@ def delete_appointment(slot_id):
 @app.route('/user')
 def user_dashboard():
     if 'role' in session and session['role'] == 'patient':
-        
-        return render_template('user_dashboard.html')
+        conn = get_db()
+        rows = conn.execute('''
+            SELECT a.slot_id, s.slot_datetime, a.doctor_username, a.specialization, d.name AS doctor_name
+            FROM appointments a
+            JOIN doctor_slots s ON a.slot_id = s.slot_id
+            LEFT JOIN doctors d ON d.username = a.doctor_username
+            WHERE a.patient_username = ?
+            ORDER BY s.slot_datetime
+        ''', (session['username'],)).fetchall()
+        record_count = conn.execute("SELECT COUNT(*) FROM medical_records WHERE username = ?",
+                                    (session['username'],)).fetchone()[0]
+        conn.close()
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M')
+        upcoming, past = [], []
+        for r in rows:
+            item = {
+                'slot_id': r['slot_id'],
+                'when': fmt_slot(r['slot_datetime']),
+                'doctor': r['doctor_name'] or r['doctor_username'],
+                'specialization': r['specialization'],
+                'cancellable': False,
+            }
+            if r['slot_datetime'] >= now:
+                try:
+                    dt = datetime.strptime(r['slot_datetime'], '%Y-%m-%dT%H:%M')
+                    item['cancellable'] = dt - datetime.now() > timedelta(minutes=30)
+                except ValueError:
+                    pass
+                upcoming.append(item)
+            else:
+                past.append(item)
+        return render_template('user_dashboard.html', upcoming=upcoming, past=past[::-1], record_count=record_count)
     flash("Unauthorized access. Please login.")
     return redirect('/login')
 
@@ -418,7 +477,7 @@ def select_doctor_slots(doctor_username):
         slot_datetime_obj = datetime.strptime(slot['slot_datetime'], '%Y-%m-%dT%H:%M')
 
         # Manual formatting for day, month, and hour to remove leading zeros
-        formatted_datetime = f"{slot_datetime_obj.day}/{slot_datetime_obj.month}/{slot_datetime_obj.year} {slot_datetime_obj.strftime('%I:%M%p').lstrip('0')}"
+        formatted_datetime = fmt_slot(slot['slot_datetime'])
 
         # Append formatted slot
         formatted_slots.append({
@@ -465,9 +524,9 @@ def confirm_booking(slot_id, doctor_username):
 
 
 
-@app.route('/user/cancel/<int:slot_id>')
+@app.route('/user/cancel/<int:slot_id>', methods=['POST'])
 def cancel_booking(slot_id):
-    if 'role' not in session or session['role'] != 'user':
+    if 'role' not in session or session['role'] != 'patient':
         flash("Unauthorized access. Please login.")
         return redirect('/login')
 
@@ -476,8 +535,7 @@ def cancel_booking(slot_id):
     slot = conn.execute("SELECT slot_datetime FROM doctor_slots WHERE slot_id = ?", (slot_id,)).fetchone()
 
     if slot:
-        from datetime import datetime, timedelta
-        slot_time = datetime.strptime(slot["slot_datetime"], "%Y-%m-%d %H:%M:%S")
+        slot_time = datetime.strptime(slot["slot_datetime"], "%Y-%m-%dT%H:%M")
         if slot_time - datetime.now() > timedelta(minutes=30):
             conn.execute("DELETE FROM appointments WHERE slot_id = ? AND patient_username = ?", (slot_id, patient_username))
             conn.execute("UPDATE doctor_slots SET is_booked = 0 WHERE slot_id = ?", (slot_id,))
@@ -546,7 +604,20 @@ def admin():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if 'admin' in session:
-        return render_template('admin_dashboard.html')
+        conn = get_db()
+        q = lambda sql: conn.execute(sql).fetchone()[0]
+        stats = {
+            'doctors': q("SELECT COUNT(*) FROM doctors"),
+            'patients': q("SELECT COUNT(*) FROM patients"),
+            'active_patients': q("SELECT COUNT(*) FROM patients WHERE status='active'"),
+            'labadmins': q("SELECT COUNT(*) FROM lab_admins"),
+            'records': q("SELECT COUNT(*) FROM medical_records"),
+            'appointments': q("SELECT COUNT(*) FROM appointments"),
+        }
+        by_spec = conn.execute("""SELECT specialization, COUNT(*) AS n FROM doctors
+                                  GROUP BY specialization ORDER BY n DESC LIMIT 6""").fetchall()
+        conn.close()
+        return render_template('admin_dashboard.html', stats=stats, by_spec=by_spec)
     flash("Unauthorized access. Please login to view.")
     return redirect('/login')
 
@@ -791,7 +862,7 @@ def delete_doctors():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT d.*, l.username, l.password FROM doctors d
+        SELECT d.* FROM doctors d
         JOIN doctor_logins l ON d.id = l.doctor_id
     """)
     doctors = cursor.fetchall()
@@ -973,17 +1044,28 @@ def view_medical_records():
 def change_admin_password():
     if 'admin' not in session:
         flash("Unauthorized access. Please login to view.")
-        return redirect('/admin/dashboard')
-    
-    new_password = generate_password_hash(request.form['new_password'])
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE admin SET password = ? WHERE username = 'admin'", (new_password,))
-    conn.commit()
-    conn.close()
-    flash("Password updated.")
-    
-    return redirect('/admin/dashboard')
+        return redirect('/login')
+
+    if request.method == 'POST':
+        current = request.form.get('current_password', '')
+        new = request.form.get('new_password', '')
+        confirm = request.form.get('confirm_password', '')
+        conn = get_db()
+        row = conn.execute("SELECT password FROM admin WHERE id = ?", (session['admin'],)).fetchone()
+        if not row or not check_password_hash(row['password'], current):
+            flash("❌ Current password is incorrect.")
+        elif len(new) < 6:
+            flash("❌ New password must be at least 6 characters.")
+        elif new != confirm:
+            flash("❌ New passwords do not match.")
+        else:
+            conn.execute("UPDATE admin SET password = ? WHERE id = ?", (generate_password_hash(new), session['admin']))
+            conn.commit()
+            flash("✅ Password updated.")
+        conn.close()
+        return redirect('/admin/change_password')
+
+    return render_template('change_password.html')
 
 @app.route('/labadmin', methods=['GET', 'POST'])
 def labadmin_dashboard():
@@ -1055,6 +1137,9 @@ def labadmin_view_patients():
 # filepath: d:\FINAL_MEDICAL\app.py
 @app.route('/view_scan/<int:record_id>')
 def view_scan(record_id):
+    if 'role' not in session and 'admin' not in session:
+        flash("Unauthorized access. Please login.")
+        return redirect('/login')
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT scan_and_report FROM medical_records WHERE id = ?", (record_id,))

@@ -1,5 +1,2 @@
 {% extends "base_view_medical.html" %}
-
-{% block back_button %}
-<a href="{{ url_for('labadmin_dashboard') }}" class="back-btn">← Back to Lab Admin Dashboard</a>
-{% endblock %}
+{% block back_button %}<a class="crumb" href="{{ url_for('labadmin_dashboard') }}">← Back to dashboard</a>{% endblock %}

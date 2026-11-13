@@ -1,0 +1,42 @@
+{% macro field(label, name, type='text', rule='', value='', full=false, required=true, placeholder='') %}
+<div class="field{{ ' full' if full }}">
+    <label for="{{ name }}">{{ label }}</label>
+    <input type="{{ type }}" id="{{ name }}" name="{{ name }}" value="{{ value or '' }}" placeholder="{{ placeholder }}"
+           {% if rule %}data-rule="{{ rule }}"{% endif %} {{ 'required' if required }}>
+    <span class="field-error"></span>
+</div>
+{% endmacro %}
+
+{% macro select(label, name, options, value='') %}
+<div class="field">
+    <label for="{{ name }}">{{ label }}</label>
+    <select id="{{ name }}" name="{{ name }}" required>
+        <option value="">Select…</option>
+        {% for o in options %}<option value="{{ o|lower }}" {{ 'selected' if value and value|lower == o|lower }}>{{ o }}</option>{% endfor %}
+    </select>
+    <span class="field-error"></span>
+</div>
+{% endmacro %}
+
+{% macro empty(icon, text) %}
+<div class="empty"><span class="big">{{ icon }}</span>{{ text }}</div>
+{% endmacro %}
+
+{% macro back(url, text='Back to dashboard') %}
+<a class="crumb" href="{{ url }}">← {{ text }}</a>
+{% endmacro %}
+
+{% macro scan(record) %}
+{% if record.scan_and_report %}
+<a href="{{ url_for('view_scan', record_id=record.id) }}" target="_blank"><img class="record-img" src="{{ record.scan_and_report }}" alt="Scan"></a>
+{% else %}<span class="muted">—</span>{% endif %}
+{% endmacro %}
+
+{% macro report(record) %}
+{% if record.normal_report %}
+    {% if '/d/' in record.normal_report %}
+    {% set file_id = record.normal_report.split('/d/')[1].split('/')[0] %}
+    <div class="iframe-container"><iframe src="https://drive.google.com/file/d/{{ file_id }}/preview"></iframe></div>
+    {% else %}<a href="{{ record.normal_report }}" target="_blank" rel="noopener">Open report ↗</a>{% endif %}
+{% else %}<span class="muted">—</span>{% endif %}
+{% endmacro %}

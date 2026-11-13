@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}MediCare{% endblock %} · MediCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+{% set role = 'admin' if session.get('admin') else session.get('role') %}
+{% set home = {'admin': '/admin/dashboard', 'doctor': '/doctor', 'patient': '/user', 'labadmin': '/labadmin'}.get(role, '/') %}
+{% set who = session.get('username') or ('admin' if role == 'admin' else '') %}
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="{{ home }}"><span class="logo">✚</span> MediCare</a>
+        <nav class="nav-links">
+            {% if role == 'doctor' %}
+                <a href="/doctor">Dashboard</a>
+                <a href="/doctor/appointments">Today</a>
+                <a href="/doctor/create_slot">Slots</a>
+                <a href="/doctor/doctor_view_medical_record">Records</a>
+            {% elif role == 'patient' %}
+                <a href="/user">Dashboard</a>
+                <a href="/user/book">Book</a>
+                <a href="/user/records">My Records</a>
+            {% elif role == 'labadmin' %}
+                <a href="/labadmin">Dashboard</a>
+                <a href="/labadmin/upload">Upload</a>
+                <a href="/labadmin/view_patients">Patients</a>
+            {% elif role == 'admin' %}
+                <a href="/admin/dashboard">Dashboard</a>
+            {% else %}
+                <a href="/#about">About</a>
+                <a href="/#doctors">Doctors</a>
+                <a href="/#contact">Contact</a>
+            {% endif %}
+        </nav>
+        <div class="nav-right">
+            <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+            {% if role %}
+                <div class="user-chip"><span class="avatar">{{ (who or '?')[0] }}</span><span class="name">{{ who }}</span></div>
+                <a class="btn secondary sm" href="/logout">Logout</a>
+            {% else %}
+                <a class="btn sm" href="/login">Login</a>
+            {% endif %}
+            <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="Menu">☰</button>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    {% block flashes %}
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% if msgs %}
+        <div class="flashes">
+            {% for cat, m in msgs %}
+                {% set kind = 'error' if (cat == 'error' or '❌' in m or '⚠' in m or 'Unauthorized' in m or 'Invalid' in m or 'Cannot' in m or 'not found' in m|lower)
+                              else 'success' if (cat == 'success' or '✅' in m or 'successfully' in m|lower) else '' %}
+                <div class="flash {{ kind }}"><span>{{ m }}</span><button aria-label="Dismiss">×</button></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+    {% endblock %}
+    {% block content %}{% endblock %}
+</main>
+{% block footer %}<footer class="footer">© MediCare Hospital Management · Care, connected.</footer>{% endblock %}
+</body>
+</html>

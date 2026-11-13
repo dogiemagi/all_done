@@ -1,93 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Doctor Details</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f6f8;
-            padding: 40px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: auto;
-            background-color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #007BFF;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .back-btn {
-            display: block;
-            width: 180px;
-            margin: 30px auto 0;
-            padding: 12px;
-            text-align: center;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .back-btn:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <h2>Doctor Details</h2>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Gender</th> <!-- Added Gender Column -->
-            <th>Specialization</th>
-            <th>Experience</th>
-            <th>Contact</th>
-            <th>Available Slots</th>
-            <th>Username</th>
-            <th>Password (Hashed)</th>
-        </tr>
-        {% for doc in doctors %}
-        <tr>
-            <td>{{ doc[0] }}</td> <!-- id -->
-            <td>{{ doc[2] }}</td> <!-- name -->
-            <td>{{ doc[4] }}</td> <!-- gender -->
-            <td>{{ doc[3] }}</td> <!-- specialization -->
-            <td>{{ doc[5] }}</td> <!-- experience -->
-            <td>{{ doc[6] }}</td> <!-- contact -->
-            <td>{{ doc[7] }}</td> <!-- available_slots -->
-            <td>{{ doc[8] }}</td> <!-- login username -->
-            <td>******</td> <!--<td>{{ doc[9] }}</td> Password -->
-
-        </tr>
-        {% endfor %}
-        
-    </table>
-    <a href="/admin/dashboard" class="back-btn">← Back to Dashboard</a>
-</body>
-</html>
+{% extends "admin_base.html" %}
+{% from "_macros.html" import empty %}
+{% block title %}Doctors{% endblock %}
+{% block admin %}
+<div class="page-head"><div><h1>Doctors</h1><p><span id="n">{{ doctors|length }}</span> total</p></div><a class="btn" href="/admin/add_doctor_form">＋ Add doctor</a></div>
+<div class="toolbar"><div class="search grow"><input type="search" placeholder="Search doctors…" data-filter="#t tbody tr" data-count="#n"></div></div>
+<div class="table-wrap"><table id="t">
+    <thead><tr><th>ID</th><th>Name</th><th>Gender</th><th>Specialization</th><th>Experience</th><th>Contact</th><th>Slots</th><th>Username</th></tr></thead>
+    <tbody>
+    {% for d in doctors %}
+    <tr><td>{{ d['id'] }}</td><td><b>{{ d['name'] }}</b></td><td>{{ d['gender']|capitalize }}</td><td><span class="badge teal">{{ d['specialization'] }}</span></td>
+        <td>{{ d['experience'] }} yrs</td><td>{{ d['contact'] }}</td><td>{{ d['available_slots'] }}</td><td>{{ d['username'] }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>{% if not doctors %}{{ empty('🩺', 'No doctors yet.') }}{% endif %}</div>
+{% endblock %}

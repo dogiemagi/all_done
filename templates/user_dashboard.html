@@ -1,121 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+{% from "_macros.html" import empty %}
+<div class="page-head">
+    <div><h1>Hi, {{ session['username'] }} 👋</h1><p>Manage your appointments and records.</p></div>
+    <a class="btn" href="/user/book">＋ Book appointment</a>
+</div>
 
-<head>
-    <meta charset="UTF-8">
-    <title>User Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f6f8;
-        }
+<div class="grid cols-3">
+    <div class="card stat"><div class="ico">📅</div><div><div class="num">{{ upcoming|length }}</div><div class="lbl">Upcoming appointments</div></div></div>
+    <div class="card stat blue"><div class="ico">✔️</div><div><div class="num">{{ past|length }}</div><div class="lbl">Past appointments</div></div></div>
+    <a class="card stat warn" href="/user/records" style="color:inherit"><div class="ico">🗂️</div><div><div class="num">{{ record_count }}</div><div class="lbl">Medical records →</div></div></a>
+</div>
 
-        .navbar {
-            background-color: #007BFF;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-
-        .navbar h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-            background-color: #0056b3;
-            padding: 10px 15px;
-            border-radius: 6px;
-        }
-
-        .dashboard {
-            max-width: 800px;
-            margin: 30px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .dashboard h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .actions a button {
-            width: 100%;
-            padding: 15px;
-            background-color: #007BFF;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .actions a button:hover {
-            background-color: #0056b3;
-        }
-
-        .flash-messages {
-            margin-top: 20px;
-            color: red;
-        }
-
-        .appointment-details {
-            margin-top: 30px;
-        }
-
-        .appointment-details p {
-            font-size: 18px;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="navbar">
-        <h1>User Dashboard</h1>
-        <a href="/logout">Logout</a>
+<div class="card" style="margin-top:18px">
+    <div class="card-title"><h3>Upcoming appointments</h3></div>
+    {% for a in upcoming %}
+    {% set parts = a.when.split(',')[0].split(' ') %}
+    <div class="appt">
+        <div class="date-box"><b>{{ parts[0] }}</b><small>{{ parts[1] }}</small></div>
+        <div class="info"><b>Dr. {{ a.doctor }}</b><span class="muted">{{ a.specialization }} · {{ a.when.split(',')[1]|trim }}</span></div>
+        {% if a.cancellable %}
+        <form method="POST" action="{{ url_for('cancel_booking', slot_id=a.slot_id) }}" onsubmit="return confirm('Cancel this appointment?')">
+            <button class="btn danger sm" type="submit">Cancel</button>
+        </form>
+        {% else %}<span class="badge warn" title="Cancellation closes 30 minutes before">Locked</span>{% endif %}
     </div>
+    {% else %}
+    {{ empty('📭', 'No upcoming appointments. Book one to get started.') }}
+    {% endfor %}
+</div>
 
-    <div class="dashboard">
-        <h2>{{ session['username'] }}'s Dashboard</h2>
-
-        <div class="actions">
-            <a href="/user/book"><button>Book Appointment</button></a>
-            <a href="{{ url_for('view_user_records') }}"><button>View My Medical Records</button></a>
-        </div>
-
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="flash-messages">
-            <ul>
-                {% for message in messages %}
-                <li>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-        {% endwith %}
-
-        
-
+{% if past %}
+<div class="card">
+    <div class="card-title"><h3>Past appointments</h3></div>
+    {% for a in past %}
+    <div class="appt">
+        <div class="date-box" style="background:var(--surface-2);color:var(--muted)"><b>{{ a.when.split(',')[0].split(' ')[0] }}</b><small>{{ a.when.split(',')[0].split(' ')[1] }}</small></div>
+        <div class="info"><b>Dr. {{ a.doctor }}</b><span class="muted">{{ a.specialization }} · {{ a.when.split(',')[1]|trim }}</span></div>
+        <span class="badge ok">Completed</span>
     </div>
-</body>
-
-</html>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

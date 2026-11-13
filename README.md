@@ -44,6 +44,16 @@ This project enables secure appointment booking, medical record uploads, and hos
 - Change admin password
 
 
+## What's new (UI refresh)
+
+- Brand-new design system (`static/style.css`) with **light / dark mode** (toggle in the navbar, remembered per browser) and a fully responsive layout.
+- All pages share one `base.html` layout; admin pages share a sidebar layout (`admin_base.html`).
+- **Admin dashboard** with live stats and a doctors-by-specialty chart, plus a working **Change Password** page.
+- **Patient dashboard** now lists upcoming and past appointments, with one-click cancel (30-minute rule enforced).
+- **Doctor dashboard** shows today's / upcoming appointments, open slots and the next patient.
+- Live search on doctors, patients and records; specialty filter on the home page; show/hide password on login.
+- Fixes: patient cancel flow (wrong role check and date format), crash on the delete-doctors page, crash on the change-password route, `view_scan` now requires login.
+
 ## Tech Stack
 
 | Technology | Purpose |

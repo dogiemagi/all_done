@@ -1,107 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Doctor</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        .dashboard {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .doctor-list-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-        }
-        .doctor-card {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 10px;
-            width: 280px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
-        }
-        .doctor-card:hover {
-            transform: scale(1.05);
-        }
-        .doctor-card h3 {
-            margin-top: 0;
-            font-size: 18px;
-        }
-        .doctor-card p {
-            margin: 5px 0;
-        }
-        .doctor-card a {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-            margin-top: 10px;
-        }
-        .doctor-card a:hover {
-            background-color: #0056b3; /* Darker blue on hover */
-        }
-        .navbar {
-            text-align: center;
-            margin-top: 30px;
-        }
-        .back-btn {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-        .back-btn:hover {
-            background-color: #0056b3; /* Darker blue on hover */
-        }
-    </style>
-</head>
-<body>
-    <div class="dashboard">
-        <h2>Select a Doctor</h2>
-
-        <div class="doctor-list-container">
-            {% for doctor in doctors %}
-                <div class="doctor-card">
-                    <h3>Dr. {{ doctor.username }}</h3>
-                    <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
-                    <p><strong>Gender:</strong> {{ doctor.gender }}</p>
-                    <p><strong>Experience:</strong> {{ doctor.experience }} years</p>
-                    <a href="{{ url_for('select_doctor_slots', doctor_username=doctor.username) }}">Select Slots</a>
-                </div>
-            {% endfor %}
-        </div>
-
-        <div class="navbar">
-            <!-- Back to Dashboard button with a blue box and hover effect -->
-            <a href="/user" class="back-btn">← Back to Dashboard</a>
-        </div>
+{% extends "base.html" %}
+{% from "_macros.html" import back, empty %}
+{% block title %}Select Doctor{% endblock %}
+{% block content %}
+{{ back('/user') }}
+<div class="page-head">
+    <div><h1>Choose a doctor</h1><p><span id="doc-count">{{ doctors|length }}</span> available</p></div>
+    <div class="search" style="min-width:260px"><input type="search" placeholder="Search name or specialty…" data-filter=".doc-card" data-count="#doc-count"></div>
+</div>
+<div class="grid auto">
+    {% for doctor in doctors %}
+    <div class="card doc-card">
+        <div class="pic">{{ '👩‍⚕️' if doctor.gender|lower == 'female' else '👨‍⚕️' }}</div>
+        <h3>Dr. {{ doctor.name or doctor.username }}</h3>
+        <div class="muted">{{ doctor.specialization }}</div>
+        <div class="doc-meta"><span class="badge teal">{{ doctor.experience }} yrs</span><span class="badge">{{ doctor.gender|capitalize }}</span></div>
+        <a class="btn sm block" href="{{ url_for('select_doctor_slots', doctor_username=doctor.username) }}">View available slots</a>
     </div>
-</body>
-</html>
+    {% else %}
+    <div class="card" style="grid-column:1/-1">{{ empty('🩺', 'No doctors available right now.') }}</div>
+    {% endfor %}
+</div>
+{% endblock %}

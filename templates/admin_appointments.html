@@ -1,0 +1,32 @@
+{% extends "admin_base.html" %}
+{% from "_macros.html" import empty %}
+{% block title %}Appointments{% endblock %}
+{% block admin %}
+<div class="page-head">
+    <div><h1>Appointments</h1><p><span id="n">{{ items|length }}</span> shown</p></div>
+    <a class="btn secondary" href="/admin/export/appointments.csv">Export CSV</a>
+</div>
+<div class="toolbar">
+    <div class="search grow">{{ icon('search') }}<input type="search" placeholder="Search patient, doctor…" data-filter="#t tbody tr" data-count="#n"></div>
+    <form method="get" style="display:flex;gap:8px">
+        <select name="when" onchange="this.form.submit()" style="width:auto">
+            <option value="upcoming" {{ 'selected' if when == 'upcoming' }}>Upcoming</option>
+            <option value="past" {{ 'selected' if when == 'past' }}>Past</option>
+            <option value="all" {{ 'selected' if when == 'all' }}>All</option>
+        </select>
+        <select name="doctor" onchange="this.form.submit()" style="width:auto">
+            <option value="">All doctors</option>
+            {% for d in doctors %}<option value="{{ d['username'] }}" {{ 'selected' if doctor == d['username'] }}>{{ d['name'] }}</option>{% endfor %}
+        </select>
+    </form>
+</div>
+<div class="table-wrap"><table id="t">
+    <thead><tr><th>When</th><th>Doctor</th><th>Patient</th><th>Specialization</th><th>Notes</th></tr></thead>
+    <tbody>
+    {% for a in items %}
+    <tr><td>{{ a.when }}</td><td><b>{{ a.doctor_name or a.doctor_username }}</b></td><td>{{ a.patient_name or a.patient_username }}<br><span class="muted">@{{ a.patient_username }}</span></td>
+        <td><span class="badge teal">{{ a.specialization }}</span></td><td class="muted">{{ a.notes or '—' }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>{% if not items %}{{ empty(icon('calendar'), 'No appointments match.') }}{% endif %}</div>
+{% endblock %}

@@ -951,6 +951,92 @@ def delete_doctor(doctor_id):
 
 
 
+@app.route('/admin/appointments')
+def admin_appointments():
+    if 'admin' not in session:
+        flash("Unauthorized access. Please login to view.")
+        return redirect('/login')
+    when = request.args.get('when', 'upcoming')
+    doctor = request.args.get('doctor', '')
+    now = datetime.now().strftime('%Y-%m-%dT%H:%M')
+    sql = '''SELECT s.slot_datetime, a.slot_id, a.doctor_username, a.patient_username, a.specialization, a.notes,
+                    d.name AS doctor_name, p.name AS patient_name
+             FROM appointments a JOIN doctor_slots s ON a.slot_id = s.slot_id
+             LEFT JOIN doctors d ON d.username = a.doctor_username
+             LEFT JOIN patients p ON p.username = a.patient_username WHERE 1=1'''
+    args = []
+    if when == 'upcoming':
+        sql += ' AND s.slot_datetime >= ?'; args.append(now)
+    elif when == 'past':
+        sql += ' AND s.slot_datetime < ?'; args.append(now)
+    if doctor:
+        sql += ' AND a.doctor_username = ?'; args.append(doctor)
+    sql += ' ORDER BY s.slot_datetime' + (' DESC' if when == 'past' else '')
+    conn = get_db()
+    rows = conn.execute(sql, args).fetchall()
+    doctors = conn.execute("SELECT username, name FROM doctors ORDER BY name").fetchall()
+    conn.close()
+    items = [dict(r, when=fmt_slot(r['slot_datetime'])) for r in rows]
+    return render_template('admin_appointments.html', items=items, doctors=doctors, when=when, doctor=doctor)
+
+
+@app.route('/admin/reset_password/<role>/<int:uid>', methods=['POST'])
+def admin_reset_password(role, uid):
+    """Admin sets a random temporary password for a doctor / patient / lab admin."""
+    if 'admin' not in session:
+        return redirect('/login')
+    import secrets
+    targets = {
+        'doctor': ([('doctor_logins', 'doctor_id')], 'staff', {'tab': 'doctors'}),
+        'labadmin': ([('lab_admins', 'id'), ('labadmin_logins', 'labadmin_id')], 'staff', {'tab': 'labadmins'}),
+        'patient': ([('patient_logins', 'patient_id')], 'view_patients', {}),
+    }
+    if role not in targets:
+        return redirect('/admin/dashboard')
+    tables, _, _ = targets[role]
+    endpoint = 'manage_staff' if role != 'patient' else 'view_patients'
+    conn = get_db()
+    t0, k0 = tables[0]
+    row = conn.execute(f"SELECT username FROM {t0} WHERE {k0} = ?", (uid,)).fetchone()
+    if not row:
+        conn.close()
+        flash("Account not found.", "error")
+        return redirect(url_for(endpoint, **targets[role][2]))
+    temp = secrets.token_urlsafe(6)
+    hashed = generate_password_hash(temp)
+    for t, k in tables:
+        conn.execute(f"UPDATE {t} SET password = ? WHERE {k} = ?", (hashed, uid))
+    conn.commit()
+    conn.close()
+    flash(f"Temporary password for {row['username']}: {temp} (share it securely; they can change it after signing in).", "success")
+    return redirect(url_for(endpoint, **targets[role][2]))
+
+
+@app.route('/user/profile', methods=['GET', 'POST'])
+def user_profile():
+    if session.get('role') != 'patient':
+        return redirect(url_for('login'))
+    conn = get_db()
+    if request.method == 'POST':
+        contact = request.form.get('contact', '').strip()[:30]
+        try:
+            age = int(request.form.get('age', ''))
+            if not 0 < age < 130:
+                raise ValueError
+        except ValueError:
+            flash("Enter a valid age.", "error")
+            conn.close()
+            return redirect(url_for('user_profile'))
+        conn.execute("UPDATE patients SET contact = ?, age = ? WHERE username = ?", (contact, age, session['username']))
+        conn.commit()
+        flash("Profile updated.", "success")
+        conn.close()
+        return redirect(url_for('user_profile'))
+    p = conn.execute("SELECT * FROM patients WHERE username = ?", (session['username'],)).fetchone()
+    conn.close()
+    return render_template('user_profile.html', p=p)
+
+
 @app.route('/admin/export/<kind>.csv')
 def admin_export(kind):
     if 'admin' not in session:

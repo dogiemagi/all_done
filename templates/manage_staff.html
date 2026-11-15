@@ -28,8 +28,9 @@
     <tr>
         <td>{{ d['id'] }}</td><td><b>{{ d['name'] }}</b></td><td>{{ d['gender']|capitalize }}</td>
         <td><span class="badge teal">{{ d['specialization'] }}</span></td><td>{{ d['experience'] }} yrs</td><td>{{ d['contact'] }}</td><td>{{ d['username'] }}</td>
-        <td style="text-align:right">
-            <form method="POST" action="{{ url_for('delete_doctor', doctor_id=d['id']) }}" onsubmit="return confirm('Permanently delete Dr. {{ d['name']|e }} and their login? This cannot be undone.');">
+        <td style="text-align:right;white-space:nowrap">
+            <form method="POST" style="display:inline" action="{{ url_for('admin_reset_password', role='doctor', uid=d['id']) }}" onsubmit="return confirm('Reset password for {{ d['username']|e }}?')"><button class="btn secondary sm" type="submit">{{ icon('key') }} Reset</button></form>
+            <form method="POST" style="display:inline" action="{{ url_for('delete_doctor', doctor_id=d['id']) }}" onsubmit="return confirm('Permanently delete Dr. {{ d['name']|e }} and their login? This cannot be undone.');">
                 <button class="btn danger sm" type="submit">{{ icon('trash') }} Delete</button>
             </form>
         </td>
@@ -44,8 +45,9 @@
     {% for l in labadmins %}
     <tr>
         <td>{{ l['id'] }}</td><td><b>{{ l['name'] }}</b></td><td>{{ l['specialization'] }}</td><td>{{ l['phone'] }}</td><td>{{ l['username'] }}</td>
-        <td style="text-align:right">
-            <form method="POST" action="{{ url_for('delete_labadmin', labadmin_id=l['id']) }}" onsubmit="return confirm('Permanently delete {{ l['name']|e }} and their login? This cannot be undone.');">
+        <td style="text-align:right;white-space:nowrap">
+            <form method="POST" style="display:inline" action="{{ url_for('admin_reset_password', role='labadmin', uid=l['id']) }}" onsubmit="return confirm('Reset password for {{ l['username']|e }}?')"><button class="btn secondary sm" type="submit">{{ icon('key') }} Reset</button></form>
+            <form method="POST" style="display:inline" action="{{ url_for('delete_labadmin', labadmin_id=l['id']) }}" onsubmit="return confirm('Permanently delete {{ l['name']|e }} and their login? This cannot be undone.');">
                 <button class="btn danger sm" type="submit">{{ icon('trash') }} Delete</button>
             </form>
         </td>

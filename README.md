@@ -46,6 +46,9 @@ This project enables secure appointment booking, medical record uploads, and hos
 
 ## What's new (UI refresh)
 
+- **Admin appointments overview** with upcoming/past and per-doctor filters, plus CSV export.
+- **Admin password reset**: generates a temporary password for any doctor, patient or lab admin.
+- **Patient profile**: patients can update their age and contact details.
 - **Visit notes**: doctors add notes to today's appointments; patients see them under past appointments.
 - **Change password** for doctors, patients and lab admins (key icon in the navbar).
 - **CSV export** of patients, doctors and appointments for admins (`/admin/export/<patients|doctors|appointments>.csv`).

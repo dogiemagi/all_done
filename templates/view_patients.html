@@ -14,11 +14,12 @@
     </form>
 </div>
 <div class="table-wrap"><table id="t">
-    <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Contact</th><th>Username</th><th>Status</th></tr></thead>
+    <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Contact</th><th>Username</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for p in patients %}
     <tr><td>{{ p['id'] }}</td><td><b>{{ p['name'] }}</b></td><td>{{ p['age'] }}</td><td>{{ p['gender']|capitalize }}</td><td>{{ p['contact'] }}</td><td>{{ p['username'] }}</td>
-        <td><span class="badge {{ 'ok' if p['status'] == 'active' else 'off' }}">{{ p['status']|capitalize }}</span></td></tr>
+        <td><span class="badge {{ 'ok' if p['status'] == 'active' else 'off' }}">{{ p['status']|capitalize }}</span></td>
+        <td style="text-align:right"><form method="POST" action="{{ url_for('admin_reset_password', role='patient', uid=p['id']) }}" onsubmit="return confirm('Reset password for {{ p['username']|e }}?')"><button class="btn secondary sm" type="submit">{{ icon('key') }} Reset password</button></form></td></tr>
     {% endfor %}
     </tbody>
 </table>{% if not patients %}{{ empty(icon('users'), 'No patients found.') }}{% endif %}</div>

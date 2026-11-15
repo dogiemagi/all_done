@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My profile</h1><p>Keep your contact details up to date.</p></div></div>
+<div class="card" style="max-width:480px">
+    <dl style="margin-bottom:16px">
+        <dt class="muted">Name</dt><dd><b>{{ p['name'] }}</b></dd>
+        <dt class="muted" style="margin-top:8px">Username</dt><dd>{{ p['username'] }}</dd>
+        <dt class="muted" style="margin-top:8px">Gender</dt><dd>{{ p['gender']|capitalize }}</dd>
+    </dl>
+    <form method="POST">
+        <div class="grid">
+            <div class="field"><label for="age">Age</label><input type="number" id="age" name="age" min="1" max="129" value="{{ p['age'] }}" required></div>
+            <div class="field"><label for="contact">Contact</label><input type="text" id="contact" name="contact" maxlength="30" value="{{ p['contact'] or '' }}"></div>
+        </div>
+        <div class="form-actions"><button class="btn" type="submit">Save changes</button></div>
+    </form>
+</div>
+{% endblock %}

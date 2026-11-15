@@ -15,6 +15,19 @@
 </div>
 
 <div class="card">
+    <h3>Generate several slots</h3>
+    <form method="POST" class="toolbar" style="margin:0">
+        <input type="hidden" name="bulk" value="1">
+        <input type="date" name="day" id="bulk_day" required>
+        <input type="time" name="start" value="09:00" required>
+        <input type="time" name="end" value="13:00" required>
+        <select name="minutes" style="width:auto"><option value="15">15 min</option><option value="20">20 min</option><option value="30" selected>30 min</option><option value="60">60 min</option></select>
+        <button class="btn" type="submit">Generate</button>
+    </form>
+    <p class="muted" style="margin:8px 0 0;font-size:.85rem">Fills the window with back-to-back slots (up to 48), skipping times that already exist.</p>
+</div>
+
+<div class="card">
     <div class="card-title"><h3>Your slots ({{ slots|length }})</h3></div>
     <div class="grid auto">
     {% for slot in slots %}
@@ -37,6 +50,7 @@
   (function () {
     const d = new Date(Date.now() + 31 * 60000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('slot_time').min = d.toISOString().slice(0, 16);
+    document.getElementById('bulk_day').min = d.toISOString().slice(0, 10);
   })();
 </script>
 {% endblock %}

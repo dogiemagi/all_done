@@ -20,6 +20,7 @@
     <div class="appt">
         <div class="date-box"><b>{{ parts[0] }}</b><small>{{ parts[1] }}</small></div>
         <div class="info"><b>Dr. {{ a.doctor }}</b><span class="muted">{{ a.specialization }} · {{ a.when.split(',')[1]|trim }}</span></div>
+        <a class="btn secondary sm" href="{{ url_for('appointment_ics', slot_id=a.slot_id) }}" title="Add to calendar">{{ icon('calendar') }} Calendar</a>
         {% if a.cancellable %}
         <form method="POST" action="{{ url_for('cancel_booking', slot_id=a.slot_id) }}" onsubmit="return confirm('Cancel this appointment?')">
             <button class="btn danger sm" type="submit">Cancel</button>

@@ -271,6 +271,8 @@ def doctor_view_medical_record():
     
 @app.route('/doctor/create_slot', methods=['GET', 'POST'])
 def create_slot():
+    if session.get('role') != 'doctor':
+        return redirect(url_for('login'))
     doctor_username = session.get('username')  # Get the logged-in doctor's username
     conn = get_db()
     # Automatically delete past slots
@@ -281,10 +283,42 @@ def create_slot():
     """, (doctor_username, current_time))
     conn.commit()
 
+    if request.method == 'POST' and request.form.get('bulk'):
+        # Bulk generate slots: one day, start-end, fixed duration
+        try:
+            day = request.form['day']
+            start = datetime.strptime(f"{day}T{request.form['start']}", '%Y-%m-%dT%H:%M')
+            end = datetime.strptime(f"{day}T{request.form['end']}", '%Y-%m-%dT%H:%M')
+            minutes = int(request.form['minutes'])
+            if minutes not in (10, 15, 20, 30, 45, 60) or end <= start:
+                raise ValueError
+        except (KeyError, ValueError):
+            flash('Enter a valid date, a start time before the end time, and a duration.', 'error')
+            return redirect(url_for('create_slot'))
+        earliest = datetime.now() + timedelta(minutes=30)
+        existing = {r[0] for r in conn.execute(
+            "SELECT slot_datetime FROM doctor_slots WHERE doctor_username = ?", (doctor_username,))}
+        added, t = 0, start
+        while t + timedelta(minutes=minutes) <= end and added < 48:
+            key = t.strftime('%Y-%m-%dT%H:%M')
+            if t > earliest and key not in existing:
+                conn.execute("INSERT INTO doctor_slots (doctor_username, slot_datetime) VALUES (?, ?)",
+                             (doctor_username, key))
+                added += 1
+            t += timedelta(minutes=minutes)
+        conn.commit()
+        flash(f'{added} slot(s) created.' if added else 'No new slots created (past times or already existing).',
+              'success' if added else 'error')
+        return redirect(url_for('create_slot'))
+
     if request.method == 'POST':
         slot_time = request.form['slot_time']
         slot_datetime = datetime.strptime(slot_time, '%Y-%m-%dT%H:%M')  # Parse the slot time from form input
-        
+        if conn.execute("SELECT 1 FROM doctor_slots WHERE doctor_username = ? AND slot_datetime = ?",
+                        (doctor_username, slot_time)).fetchone():
+            flash('You already have a slot at that time.', 'error')
+            return redirect(url_for('create_slot'))
+
         # Get current time + 30 minutes
         current_time_plus_30 = datetime.now() + timedelta(minutes=30)
         
@@ -559,8 +593,8 @@ def select_doctor_slots(doctor_username):
 
 @app.route('/user/book_slot/<int:slot_id>/<doctor_username>', methods=['GET', 'POST'])
 def confirm_booking(slot_id, doctor_username):
-    if 'username' not in session:
-        flash("You must be logged in to book a slot.")
+    if session.get('role') != 'patient':
+        flash("You must be logged in as a patient to book a slot.")
         return redirect(url_for('login'))
 
     patient_username = session['username']
@@ -576,7 +610,18 @@ def confirm_booking(slot_id, doctor_username):
 
     # Fetch the slot details
     slot = conn.execute("SELECT * FROM doctor_slots WHERE slot_id = ?", (slot_id,)).fetchone()
-    if slot and slot['is_booked'] == 0:
+    clash = None
+    if slot:
+        clash = conn.execute('''SELECT 1 FROM appointments a JOIN doctor_slots s ON a.slot_id = s.slot_id
+                                WHERE a.patient_username = ? AND s.slot_datetime = ?''',
+                             (patient_username, slot['slot_datetime'])).fetchone()
+    if slot and slot['is_booked'] == 0 and slot['doctor_username'] != doctor_username:
+        flash("This slot is unavailable.", "error")
+    elif clash:
+        flash("You already have an appointment at that time.", "error")
+    elif slot and slot['slot_datetime'] < datetime.now().strftime('%Y-%m-%dT%H:%M'):
+        flash("That slot is in the past.", "error")
+    elif slot and slot['is_booked'] == 0:
         # Book the slot and create the appointment
         conn.execute("UPDATE doctor_slots SET is_booked = 1 WHERE slot_id = ?", (slot_id,))
         conn.execute(
@@ -591,6 +636,35 @@ def confirm_booking(slot_id, doctor_username):
     return redirect(url_for('user_dashboard'))
 
 
+
+
+@app.route('/user/calendar/<int:slot_id>.ics')
+def appointment_ics(slot_id):
+    """Download an upcoming appointment as an iCalendar event."""
+    if session.get('role') != 'patient':
+        return redirect(url_for('login'))
+    conn = get_db()
+    r = conn.execute('''SELECT s.slot_datetime, a.doctor_username, a.specialization, d.name AS doctor_name
+                        FROM appointments a JOIN doctor_slots s ON a.slot_id = s.slot_id
+                        LEFT JOIN doctors d ON d.username = a.doctor_username
+                        WHERE a.slot_id = ? AND a.patient_username = ?''', (slot_id, session['username'])).fetchone()
+    conn.close()
+    if not r:
+        flash("Appointment not found.", "error")
+        return redirect(url_for('user_dashboard'))
+    start = datetime.strptime(r['slot_datetime'], '%Y-%m-%dT%H:%M')
+    fmt = '%Y%m%dT%H%M%S'
+    who = r['doctor_name'] or r['doctor_username']
+    ics = "\r\n".join([
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MediCare//EN", "BEGIN:VEVENT",
+        f"UID:appt-{slot_id}@medicare", f"DTSTAMP:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}",
+        f"DTSTART:{start.strftime(fmt)}", f"DTEND:{(start + timedelta(minutes=30)).strftime(fmt)}",
+        f"SUMMARY:Appointment with Dr. {who}".replace(',', '\\,'),
+        f"DESCRIPTION:{r['specialization'] or ''}".replace(',', '\\,'),
+        "END:VEVENT", "END:VCALENDAR", ""])
+    resp = app.response_class(ics, mimetype='text/calendar')
+    resp.headers['Content-Disposition'] = f'attachment; filename=appointment-{slot_id}.ics'
+    return resp
 
 
 @app.route('/user/cancel/<int:slot_id>', methods=['POST'])

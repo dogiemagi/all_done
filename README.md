@@ -46,6 +46,9 @@ This project enables secure appointment booking, medical record uploads, and hos
 
 ## What's new (UI refresh)
 
+- **Bulk slot generator** for doctors (fill a time window with 15/20/30/60-minute slots) and duplicate-slot protection.
+- **Add to calendar**: patients can download any upcoming appointment as an `.ics` file.
+- Booking guards: no double-booking the same time, no booking past slots, patients only.
 - **Admin appointments overview** with upcoming/past and per-doctor filters, plus CSV export.
 - **Admin password reset**: generates a temporary password for any doctor, patient or lab admin.
 - **Patient profile**: patients can update their age and contact details.

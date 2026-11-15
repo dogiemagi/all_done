@@ -5,19 +5,19 @@
 {{ back('/user') }}
 <div class="page-head">
     <div><h1>Choose a doctor</h1><p><span id="doc-count">{{ doctors|length }}</span> available</p></div>
-    <div class="search" style="min-width:260px"><input type="search" placeholder="Search name or specialty…" data-filter=".doc-card" data-count="#doc-count"></div>
+    <div class="search" style="min-width:260px">{{ icon('search') }}<input type="search" placeholder="Search name or specialty…" data-filter=".doc-card" data-count="#doc-count"></div>
 </div>
 <div class="grid auto">
     {% for doctor in doctors %}
     <div class="card doc-card">
-        <div class="pic">{{ '👩‍⚕️' if doctor.gender|lower == 'female' else '👨‍⚕️' }}</div>
+        <div class="pic">{{ icon('user') if doctor.gender|lower == 'female' else icon('user') }}</div>
         <h3>Dr. {{ doctor.name or doctor.username }}</h3>
         <div class="muted">{{ doctor.specialization }}</div>
         <div class="doc-meta"><span class="badge teal">{{ doctor.experience }} yrs</span><span class="badge">{{ doctor.gender|capitalize }}</span></div>
         <a class="btn sm block" href="{{ url_for('select_doctor_slots', doctor_username=doctor.username) }}">View available slots</a>
     </div>
     {% else %}
-    <div class="card" style="grid-column:1/-1">{{ empty('🩺', 'No doctors available right now.') }}</div>
+    <div class="card" style="grid-column:1/-1">{{ empty(icon('stethoscope'), 'No doctors available right now.') }}</div>
     {% endfor %}
 </div>
 {% endblock %}

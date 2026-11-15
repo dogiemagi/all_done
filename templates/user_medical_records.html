@@ -10,6 +10,6 @@
         <thead><tr><th>ID</th><th>Scan</th><th>Report</th><th>Uploaded</th></tr></thead>
         <tbody>{% for r in records %}<tr><td>{{ r.id }}</td><td>{{ scan(r) }}</td><td>{{ report(r) }}</td><td>{{ r.upload_date }}</td></tr>{% endfor %}</tbody>
     </table></div>
-    {% else %}{{ empty('🗂️', 'No records have been uploaded yet.') }}{% endif %}
+    {% else %}{{ empty(icon('folder'), 'No records have been uploaded yet.') }}{% endif %}
 </div>
 {% endblock %}

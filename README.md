@@ -52,6 +52,18 @@ This project enables secure appointment booking, medical record uploads, and hos
 - **Patient dashboard** now lists upcoming and past appointments, with one-click cancel (30-minute rule enforced).
 - **Doctor dashboard** shows today's / upcoming appointments, open slots and the next patient.
 - Live search on doctors, patients and records; specialty filter on the home page; show/hide password on login.
+- Icons are an inline SVG set (`icons.py`, used as `{{ icon('name') }}` in templates) instead of emojis.
+- Sign-in page has an app overview panel and an optional demo patient login.
+- Activate/deactivate patients are merged into one **Manage patients** page; doctors and lab admins into one **Doctors & Lab Admins** page (view, search, delete).
+
+### Demo data
+
+```bash
+python seed_demo.py           # adds demo_admin / demo_doctor / demo_patient / demo_lab (password: demo123)
+python seed_demo.py --remove  # removes it again
+```
+
+The sign-in page shows a "Continue as demo patient" button only while the demo accounts exist. Remove the demo data before deploying.
 - Fixes: patient cancel flow (wrong role check and date format), crash on the delete-doctors page, crash on the change-password route, `view_scan` now requires login.
 
 ## Tech Stack

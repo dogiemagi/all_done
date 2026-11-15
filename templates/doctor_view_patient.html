@@ -12,6 +12,6 @@
         <thead><tr><th>Scan</th><th>Report</th><th>Uploaded</th></tr></thead>
         <tbody>{% for r in records %}<tr><td>{{ scan(r) }}</td><td>{{ report(r) }}</td><td>{{ r.upload_date }}</td></tr>{% endfor %}</tbody>
     </table></div>
-    {% else %}{{ empty('🗂️', 'No medical records found for this patient.') }}{% endif %}
+    {% else %}{{ empty(icon('folder'), 'No medical records found for this patient.') }}{% endif %}
 </div>
 {% endblock %}

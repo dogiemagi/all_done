@@ -1,12 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Sign in{% endblock %}
 {% block content %}
-<div class="auth-wrap">
+{% set demos = demo_accounts() %}
+<div class="auth-split">
+    <aside class="auth-info">
+        <span class="eyebrow">Hospital management portal</span>
+        <h1>One place for every part of patient care.</h1>
+        <p>MediCare connects admins, doctors, patients and lab staff, so appointments, scans and reports stay organised and secure.</p>
+
+        <ul class="role-list">
+            <li><span class="ico">{{ icon('shield') }}</span><div><b>Admin</b><small>Manage doctors, patients and lab staff; activate accounts; see live hospital stats.</small></div></li>
+            <li><span class="ico">{{ icon('stethoscope') }}</span><div><b>Doctor</b><small>Publish appointment slots, run today's schedule and review patient history.</small></div></li>
+            <li><span class="ico">{{ icon('user') }}</span><div><b>Patient</b><small>Book and cancel appointments and view your own scans and reports.</small></div></li>
+            <li><span class="ico">{{ icon('flask') }}</span><div><b>Lab admin</b><small>Upload scans and reports straight to a patient's record.</small></div></li>
+        </ul>
+
+        <div class="info-points">
+            <span>{{ icon('lock') }} Role-based access</span>
+            <span>{{ icon('calendar') }} Easy booking</span>
+            <span>{{ icon('folder') }} Digital records</span>
+        </div>
+    </aside>
+
     <div class="card auth-card">
-        <div class="logo-lg">✚</div>
+        <div class="logo-lg">{{ icon('cross') }}</div>
         <h2 style="text-align:center">Welcome back</h2>
-        <p class="muted" style="text-align:center">Sign in as admin, doctor, patient or lab admin.</p>
-        <form method="POST">
+        <p class="muted" style="text-align:center">Sign in to your portal.</p>
+        <form method="POST" id="login-form">
             <div class="field" style="margin-bottom:14px">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" autocomplete="username" required autofocus>
@@ -15,11 +35,30 @@
                 <label for="password">Password</label>
                 <div class="pw-field">
                     <input type="password" id="password" name="password" autocomplete="current-password" required>
-                    <button type="button" aria-label="Show password">👁</button>
+                    <button type="button" aria-label="Show password">{{ icon('eye') }}</button>
                 </div>
             </div>
             <button class="btn block" type="submit">Sign in</button>
         </form>
+
+        {% if demos %}
+        <div class="demo-box">
+            <div class="demo-title"><span></span><b>New here?</b><span></span></div>
+            <p class="muted" style="text-align:center;font-size:.82rem;margin-bottom:10px">Explore the patient experience with a demo account (password: <code>demo123</code>).</p>
+            <div class="demo-grid">
+                {% for d in demos %}
+                <button type="button" class="demo-btn" data-user="{{ d.user }}" data-pass="demo123">{{ icon(d.icon) }}<span>{{ d.role }}</span></button>
+                {% endfor %}
+            </div>
+        </div>
+        <script>
+          document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
+            document.getElementById('username').value = b.dataset.user;
+            document.getElementById('password').value = b.dataset.pass;
+            document.getElementById('login-form').submit();
+          }));
+        </script>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

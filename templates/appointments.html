@@ -15,7 +15,7 @@
         </form>
     </div>
     {% else %}
-    {{ empty('☕', 'No appointments for today.') }}
+    {{ empty(icon('coffee'), 'No appointments for today.') }}
     {% endfor %}
 </div>
 {% endblock %}

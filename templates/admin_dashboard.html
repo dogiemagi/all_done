@@ -3,11 +3,11 @@
 {% block admin %}
 <div class="page-head"><div><h1>Admin overview</h1><p>Everything happening across the hospital.</p></div></div>
 <div class="grid cols-3">
-    <div class="card stat"><div class="ico">🩺</div><div><div class="num">{{ stats.doctors }}</div><div class="lbl">Doctors</div></div></div>
-    <div class="card stat blue"><div class="ico">🧑‍🤝‍🧑</div><div><div class="num">{{ stats.patients }}</div><div class="lbl">Patients ({{ stats.active_patients }} active)</div></div></div>
-    <div class="card stat warn"><div class="ico">🧪</div><div><div class="num">{{ stats.labadmins }}</div><div class="lbl">Lab admins</div></div></div>
-    <div class="card stat rose"><div class="ico">🗂️</div><div><div class="num">{{ stats.records }}</div><div class="lbl">Medical records</div></div></div>
-    <div class="card stat"><div class="ico">📅</div><div><div class="num">{{ stats.appointments }}</div><div class="lbl">Appointments</div></div></div>
+    <div class="card stat"><div class="ico">{{ icon('stethoscope') }}</div><div><div class="num">{{ stats.doctors }}</div><div class="lbl">Doctors</div></div></div>
+    <div class="card stat blue"><div class="ico">{{ icon('users') }}</div><div><div class="num">{{ stats.patients }}</div><div class="lbl">Patients ({{ stats.active_patients }} active)</div></div></div>
+    <div class="card stat warn"><div class="ico">{{ icon('flask') }}</div><div><div class="num">{{ stats.labadmins }}</div><div class="lbl">Lab admins</div></div></div>
+    <div class="card stat rose"><div class="ico">{{ icon('folder') }}</div><div><div class="num">{{ stats.records }}</div><div class="lbl">Medical records</div></div></div>
+    <div class="card stat"><div class="ico">{{ icon('calendar') }}</div><div><div class="num">{{ stats.appointments }}</div><div class="lbl">Appointments</div></div></div>
 </div>
 
 <div class="grid cols-2" style="margin-top:18px">
@@ -21,10 +21,10 @@
     <div class="card">
         <h3>Quick actions</h3>
         <div class="grid" style="margin-top:8px">
-            <a class="btn secondary" href="/admin/add_doctor_form">➕ Add doctor</a>
-            <a class="btn secondary" href="/admin/add_patient_form">➕ Add patient</a>
-            <a class="btn secondary" href="/admin/add_labadmin_form">➕ Add lab admin</a>
-            <a class="btn secondary" href="/admin/change_password">🔑 Change password</a>
+            <a class="btn secondary" href="/admin/add_doctor_form">{{ icon('plus') }} Add doctor</a>
+            <a class="btn secondary" href="/admin/add_patient_form">{{ icon('plus') }} Add patient</a>
+            <a class="btn secondary" href="/admin/add_labadmin_form">{{ icon('plus') }} Add lab admin</a>
+            <a class="btn secondary" href="/admin/change_password">{{ icon('key') }} Change password</a>
         </div>
     </div>
 </div>

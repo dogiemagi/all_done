@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Lab Dashboard{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Welcome, {{ session['username'] }} 🧪</h1><p>Upload and review patient scans and reports.</p></div></div>
+<div class="page-head"><div><h1>Welcome, {{ session['username'] }}</h1><p>Upload and review patient scans and reports.</p></div></div>
 <div class="grid cols-3">
-    <div class="card stat"><div class="ico">🧑‍🤝‍🧑</div><div><div class="num">{{ patients|length }}</div><div class="lbl">Registered patients</div></div></div>
+    <div class="card stat"><div class="ico">{{ icon('users') }}</div><div><div class="num">{{ patients|length }}</div><div class="lbl">Registered patients</div></div></div>
 </div>
 <div class="grid cols-2 section">
-    <a class="action-tile" href="/labadmin/upload"><span class="ico">⬆️</span><b>Upload medical history</b><small>Attach a scan and/or report to a patient</small></a>
-    <a class="action-tile" href="/labadmin/view_patients"><span class="ico">🗂️</span><b>View patients</b><small>Browse records of active patients</small></a>
+    <a class="action-tile" href="/labadmin/upload"><span class="ico">{{ icon('upload') }}</span><b>Upload medical history</b><small>Attach a scan and/or report to a patient</small></a>
+    <a class="action-tile" href="/labadmin/view_patients"><span class="ico">{{ icon('folder') }}</span><b>View patients</b><small>Browse records of active patients</small></a>
 </div>
 {% endblock %}

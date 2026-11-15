@@ -28,7 +28,7 @@
             </form>
         </div>
     {% else %}
-        <div style="grid-column:1/-1">{{ empty('🗓️', 'No slots yet.') }}</div>
+        <div style="grid-column:1/-1">{{ empty(icon('calendar'), 'No slots yet.') }}</div>
     {% endfor %}
     </div>
 </div>

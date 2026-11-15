@@ -1,0 +1,56 @@
+{% extends "admin_base.html" %}
+{% from "_macros.html" import empty %}
+{% block title %}Doctors &amp; Lab Admins{% endblock %}
+{% block admin %}
+<div class="page-head">
+    <div><h1>Doctors &amp; lab admins</h1><p>View, search and remove staff accounts.</p></div>
+    {% if tab == 'doctors' %}
+    <a class="btn" href="/admin/add_doctor_form">{{ icon('plus') }} Add doctor</a>
+    {% else %}
+    <a class="btn" href="/admin/add_labadmin_form">{{ icon('plus') }} Add lab admin</a>
+    {% endif %}
+</div>
+
+<div class="toolbar">
+    <div class="tabs">
+        <a class="tab {{ 'active' if tab == 'doctors' }}" href="{{ url_for('manage_staff', tab='doctors') }}">{{ icon('stethoscope') }} Doctors <span class="count">{{ doctors|length }}</span></a>
+        <a class="tab {{ 'active' if tab == 'labadmins' }}" href="{{ url_for('manage_staff', tab='labadmins') }}">{{ icon('flask') }} Lab admins <span class="count">{{ labadmins|length }}</span></a>
+    </div>
+    <div class="search grow">{{ icon('search') }}<input type="search" placeholder="Search…" data-filter="#t tbody tr"></div>
+</div>
+
+{% if tab == 'doctors' %}
+<div class="table-wrap"><table id="t">
+    <thead><tr><th>ID</th><th>Name</th><th>Gender</th><th>Specialization</th><th>Experience</th><th>Contact</th><th>Username</th><th></th></tr></thead>
+    <tbody>
+    {% for d in doctors %}
+    <tr>
+        <td>{{ d['id'] }}</td><td><b>{{ d['name'] }}</b></td><td>{{ d['gender']|capitalize }}</td>
+        <td><span class="badge teal">{{ d['specialization'] }}</span></td><td>{{ d['experience'] }} yrs</td><td>{{ d['contact'] }}</td><td>{{ d['username'] }}</td>
+        <td style="text-align:right">
+            <form method="POST" action="{{ url_for('delete_doctor', doctor_id=d['id']) }}" onsubmit="return confirm('Permanently delete Dr. {{ d['name']|e }} and their login? This cannot be undone.');">
+                <button class="btn danger sm" type="submit">{{ icon('trash') }} Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>{% if not doctors %}{{ empty(icon('stethoscope'), 'No doctors yet.') }}{% endif %}</div>
+{% else %}
+<div class="table-wrap"><table id="t">
+    <thead><tr><th>ID</th><th>Name</th><th>Specialization</th><th>Phone</th><th>Username</th><th></th></tr></thead>
+    <tbody>
+    {% for l in labadmins %}
+    <tr>
+        <td>{{ l['id'] }}</td><td><b>{{ l['name'] }}</b></td><td>{{ l['specialization'] }}</td><td>{{ l['phone'] }}</td><td>{{ l['username'] }}</td>
+        <td style="text-align:right">
+            <form method="POST" action="{{ url_for('delete_labadmin', labadmin_id=l['id']) }}" onsubmit="return confirm('Permanently delete {{ l['name']|e }} and their login? This cannot be undone.');">
+                <button class="btn danger sm" type="submit">{{ icon('trash') }} Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>{% if not labadmins %}{{ empty(icon('flask'), 'No lab admins yet.') }}{% endif %}</div>
+{% endif %}
+{% endblock %}

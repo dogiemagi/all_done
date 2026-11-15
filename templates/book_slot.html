@@ -11,7 +11,7 @@
         <a class="btn sm" href="{{ url_for('confirm_booking', slot_id=slot.slot_id, doctor_username=doctor_username) }}">Book</a>
     </div>
     {% else %}
-    <div class="card" style="grid-column:1/-1">{{ empty('🗓️', 'No open slots right now. Please check back later.') }}</div>
+    <div class="card" style="grid-column:1/-1">{{ empty(icon('calendar'), 'No open slots right now. Please check back later.') }}</div>
     {% endfor %}
 </div>
 {% endblock %}

@@ -16,7 +16,7 @@
 {% set who = session.get('username') or ('admin' if role == 'admin' else '') %}
 <header class="topbar">
     <div class="topbar-inner">
-        <a class="brand" href="{{ home }}"><span class="logo">✚</span> MediCare</a>
+        <a class="brand" href="{{ home }}"><span class="logo">{{ icon('cross') }}</span> MediCare</a>
         <nav class="nav-links">
             {% if role == 'doctor' %}
                 <a href="/doctor">Dashboard</a>
@@ -40,14 +40,14 @@
             {% endif %}
         </nav>
         <div class="nav-right">
-            <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+            <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">{{ icon('moon') }}</button>
             {% if role %}
                 <div class="user-chip"><span class="avatar">{{ (who or '?')[0] }}</span><span class="name">{{ who }}</span></div>
                 <a class="btn secondary sm" href="/logout">Logout</a>
             {% else %}
                 <a class="btn sm" href="/login">Login</a>
             {% endif %}
-            <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="Menu">☰</button>
+            <button class="icon-btn menu-toggle" id="menu-toggle" aria-label="Menu">{{ icon('menu') }}</button>
         </div>
     </div>
 </header>
@@ -58,8 +58,7 @@
         {% if msgs %}
         <div class="flashes">
             {% for cat, m in msgs %}
-                {% set kind = 'error' if (cat == 'error' or '❌' in m or '⚠' in m or 'Unauthorized' in m or 'Invalid' in m or 'Cannot' in m or 'not found' in m|lower)
-                              else 'success' if (cat == 'success' or '✅' in m or 'successfully' in m|lower) else '' %}
+                {% set kind = cat if cat in ('success', 'error') else ('error' if ('Unauthorized' in m or 'Invalid' in m or 'Cannot' in m or 'not found' in m|lower) else ('success' if 'successfully' in m|lower else '')) %}
                 <div class="flash {{ kind }}"><span>{{ m }}</span><button aria-label="Dismiss">×</button></div>
             {% endfor %}
         </div>

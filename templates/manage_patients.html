@@ -1,0 +1,42 @@
+{% extends "admin_base.html" %}
+{% from "_macros.html" import empty %}
+{% block title %}Manage Patients{% endblock %}
+{% block admin %}
+<div class="page-head">
+    <div><h1>Manage patients</h1><p>Activate or deactivate patient accounts. Deactivated patients can't sign in.</p></div>
+    <a class="btn" href="/admin/add_patient_form">{{ icon('plus') }} Add patient</a>
+</div>
+
+<div class="toolbar">
+    <div class="tabs">
+        <a class="tab {{ 'active' if status == 'all' }}" href="{{ url_for('manage_patients', status='all') }}">All <span class="count">{{ counts.all }}</span></a>
+        <a class="tab {{ 'active' if status == 'active' }}" href="{{ url_for('manage_patients', status='active') }}">Active <span class="count">{{ counts.active }}</span></a>
+        <a class="tab {{ 'active' if status == 'deactive' }}" href="{{ url_for('manage_patients', status='deactive') }}">Deactive <span class="count">{{ counts.deactive }}</span></a>
+    </div>
+    <div class="search grow">{{ icon('search') }}<input type="search" placeholder="Search patients…" data-filter="#t tbody tr"></div>
+</div>
+
+<div class="table-wrap"><table id="t">
+    <thead><tr><th>ID</th><th>Name</th><th>Username</th><th>Contact</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for p in patients %}
+    {% set is_active = p['status'] == 'active' %}
+    <tr>
+        <td>{{ p['id'] }}</td><td><b>{{ p['name'] }}</b></td><td>{{ p['username'] }}</td><td>{{ p['contact'] }}</td>
+        <td><span class="badge {{ 'ok' if is_active else 'off' }}">{{ 'Active' if is_active else 'Deactive' }}</span></td>
+        <td style="text-align:right">
+            <form method="POST" {% if is_active %}onsubmit="return confirm('Deactivate {{ p['name']|e }}? They will no longer be able to sign in.')"{% endif %}>
+                <input type="hidden" name="username" value="{{ p['username'] }}">
+                <input type="hidden" name="status" value="{{ status }}">
+                {% if is_active %}
+                <button class="btn danger sm" name="action" value="deactivate" type="submit">{{ icon('user-x') }} Deactivate</button>
+                {% else %}
+                <button class="btn ok sm" name="action" value="activate" type="submit">{{ icon('user-check') }} Activate</button>
+                {% endif %}
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>{% if not patients %}{{ empty(icon('users'), 'No patients in this view.') }}{% endif %}</div>
+{% endblock %}

@@ -2,10 +2,10 @@
 {% from "_macros.html" import scan, report, empty %}
 {% block title %}Patient Records{% endblock %}
 {% block content %}
-{% block back_button %}<a class="crumb" href="/">← Back</a>{% endblock %}
+{% block back_button %}<a class="crumb" href="/">{{ icon('arrow-left') }} Back</a>{% endblock %}
 <div class="page-head">
     <div><h1>Patient medical records</h1><p><span id="n">{{ patients|length }}</span> patients</p></div>
-    <div class="search" style="min-width:280px"><input type="search" placeholder="Search name, username, contact…" data-filter=".pt" data-count="#n"></div>
+    <div class="search" style="min-width:280px">{{ icon('search') }}<input type="search" placeholder="Search name, username, contact…" data-filter=".pt" data-count="#n"></div>
 </div>
 {% for username, p in patients.items() %}
 <details class="card pt" {{ 'open' if patients|length == 1 }}>
@@ -29,6 +29,6 @@
     </div>
 </details>
 {% else %}
-<div class="card">{{ empty('🗂️', 'No patients found.') }}</div>
+<div class="card">{{ empty(icon('folder'), 'No patients found.') }}</div>
 {% endfor %}
 {% endblock %}

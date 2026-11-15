@@ -3,14 +3,14 @@
 {% block content %}
 {% from "_macros.html" import empty %}
 <div class="page-head">
-    <div><h1>Hi, {{ session['username'] }} 👋</h1><p>Manage your appointments and records.</p></div>
-    <a class="btn" href="/user/book">＋ Book appointment</a>
+    <div><h1>Hi, {{ session['username'] }}</h1><p>Manage your appointments and records.</p></div>
+    <a class="btn" href="/user/book">{{ icon('plus') }} Book appointment</a>
 </div>
 
 <div class="grid cols-3">
-    <div class="card stat"><div class="ico">📅</div><div><div class="num">{{ upcoming|length }}</div><div class="lbl">Upcoming appointments</div></div></div>
-    <div class="card stat blue"><div class="ico">✔️</div><div><div class="num">{{ past|length }}</div><div class="lbl">Past appointments</div></div></div>
-    <a class="card stat warn" href="/user/records" style="color:inherit"><div class="ico">🗂️</div><div><div class="num">{{ record_count }}</div><div class="lbl">Medical records →</div></div></a>
+    <div class="card stat"><div class="ico">{{ icon('calendar') }}</div><div><div class="num">{{ upcoming|length }}</div><div class="lbl">Upcoming appointments</div></div></div>
+    <div class="card stat blue"><div class="ico">{{ icon('check') }}</div><div><div class="num">{{ past|length }}</div><div class="lbl">Past appointments</div></div></div>
+    <a class="card stat warn" href="/user/records" style="color:inherit"><div class="ico">{{ icon('folder') }}</div><div><div class="num">{{ record_count }}</div><div class="lbl">Medical records {{ icon('arrow-right') }}</div></div></a>
 </div>
 
 <div class="card" style="margin-top:18px">
@@ -27,7 +27,7 @@
         {% else %}<span class="badge warn" title="Cancellation closes 30 minutes before">Locked</span>{% endif %}
     </div>
     {% else %}
-    {{ empty('📭', 'No upcoming appointments. Book one to get started.') }}
+    {{ empty(icon('inbox'), 'No upcoming appointments. Book one to get started.') }}
     {% endfor %}
 </div>
 

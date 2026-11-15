@@ -11,6 +11,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import re
+from icons import icon
 
 cloudinary.config(
     cloud_name = 'your_cloud_name',
@@ -18,6 +19,24 @@ cloudinary.config(
     api_secret = 'enter_yours'
 )
 app = Flask(__name__)
+app.jinja_env.globals['icon'] = icon
+
+
+def demo_accounts():
+    """Demo logins shown on the sign-in page; empty unless `python seed_demo.py` has been run."""
+    try:
+        conn = get_db()
+        has = conn.execute("SELECT 1 FROM doctor_logins WHERE username = 'demo_doctor'").fetchone()
+        conn.close()
+    except sqlite3.Error:
+        return []
+    if not has:
+        return []
+    # Only the patient (user) demo is advertised publicly.
+    return [{'role': 'Continue as demo patient', 'icon': 'user', 'user': 'demo_patient'}]
+
+
+app.jinja_env.globals['demo_accounts'] = demo_accounts
 app.secret_key = 'your_secret_key'
 
 initialize_db()
@@ -52,7 +71,7 @@ def login():
         pat = cursor.fetchone()
         if pat:
             if pat[2] != 'active':
-                flash("❌ Your account has been deactivated. Please contact the hospital.")
+                flash("Your account has been deactivated. Please contact the hospital.", "error")
                 conn.close()
                 return render_template('login.html')
             if check_password_hash(pat[1], password):
@@ -707,11 +726,11 @@ def add_doctor():
                     VALUES (?, ?, ?)
                 """, (doctor_id, data['username'], password_hash))
 
-                flash("✅ Doctor added successfully with username: " + data['username'])
+                flash("Doctor added successfully with username: " + data['username'], "success")
                 return redirect('/admin/add_doctor')
 
         except sqlite3.IntegrityError:
-            flash("❌ Username already exists or invalid data.")
+            flash("Username already exists or invalid data.", "error")
             return render_template('add_doctor.html', form_data=data)
 
     # GET method
@@ -787,10 +806,10 @@ def add_patient():
                     VALUES (?, ?, ?)
                 """, (patient_id, data['username'], password_hash))
 
-                flash(f"✅ Patient added successfully with username: {data['username']}")
+                flash(f"Patient added successfully with username: {data['username']}", "success")
                 return redirect('/admin/add_patient')
         except sqlite3.IntegrityError:
-            flash("❌ Failed to add patient. Possibly duplicate username or invalid data.")
+            flash("Failed to add patient. Possibly duplicate username or invalid data.", "error")
             return render_template(
                 'add_patient.html',
                 suggested_username=data.get('username', ''),
@@ -829,45 +848,43 @@ def add_labadmin():
                     VALUES (?, ?, ?)
                 """, (labadmin_id, data['username'], hashed_password))
 
-                flash("✅ Lab Admin added successfully.")
+                flash("Lab Admin added successfully.", "success")
                 return redirect('/admin/add_labadmin')
         except sqlite3.IntegrityError:
-            flash("❌ Username already exists or data is invalid.")
+            flash("Username already exists or data is invalid.", "error")
             return render_template('add_labadmin.html', form_data=data)
 
     return render_template('add_labadmin.html')
 
 
-@app.route('/admin/view_doctors')
-def view_doctors():
-    if 'admin' in session:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT d.*, l.username FROM doctors d
-            JOIN doctor_logins l ON d.id = l.doctor_id
-        """)
-        doctors = cursor.fetchall()
-        conn.close()
-        return render_template('view_doctors.html', doctors=doctors)
-    flash("Unauthorized access. Please login to view.")
-    return redirect('/login')
-
-@app.route('/admin/delete_doctors')
-def delete_doctors():
+@app.route('/admin/staff')
+def manage_staff():
+    """Doctors and lab admins on one page: view, search and delete."""
     if 'admin' not in session:
-        flash("Unauthorized access.")
+        flash("Unauthorized access. Please login to view.")
         return redirect('/login')
 
+    tab = request.args.get('tab', 'doctors')
+    if tab not in ('doctors', 'labadmins'):
+        tab = 'doctors'
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT d.* FROM doctors d
-        JOIN doctor_logins l ON d.id = l.doctor_id
-    """)
-    doctors = cursor.fetchall()
+    doctors = conn.execute("""
+        SELECT d.* FROM doctors d JOIN doctor_logins l ON d.id = l.doctor_id ORDER BY d.id
+    """).fetchall()
+    labadmins = conn.execute("""
+        SELECT l.id, l.name, l.specialization, l.phone, lo.username
+        FROM lab_admins l JOIN labadmin_logins lo ON l.id = lo.labadmin_id ORDER BY l.id
+    """).fetchall()
     conn.close()
-    return render_template('delete_doctors.html', doctors=doctors)
+    return render_template('manage_staff.html', tab=tab, doctors=doctors, labadmins=labadmins)
+
+
+# Old URLs keep working
+@app.route('/admin/view_doctors')
+@app.route('/admin/delete_doctors')
+def view_doctors():
+    return redirect(url_for('manage_staff', tab='doctors'))
+
 
 @app.route('/admin/delete_doctor/<int:doctor_id>', methods=['POST'])
 def delete_doctor(doctor_id):
@@ -875,15 +892,13 @@ def delete_doctor(doctor_id):
         flash("Unauthorized access.")
         return redirect('/login')
 
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM doctor_logins WHERE doctor_id = ?", (doctor_id,))
-    cursor.execute("DELETE FROM doctors WHERE id = ?", (doctor_id,))
-    conn.commit()
-    conn.close()
+    with get_db() as conn:
+        conn.execute("DELETE FROM doctor_logins WHERE doctor_id = ?", (doctor_id,))
+        conn.execute("DELETE FROM doctors WHERE id = ?", (doctor_id,))
 
-    flash("Doctor deleted successfully.")
-    return redirect('/admin/delete_doctors')
+    flash("Doctor deleted successfully.", "success")
+    return redirect(url_for('manage_staff', tab='doctors'))
+
 
 
 @app.route('/admin/view_patients', methods=['GET'])
@@ -922,94 +937,59 @@ def view_patients():
     flash("Unauthorized access. Please login to view.")
     return redirect('/login')
 
-@app.route('/admin/deactivate_patients', methods=['GET', 'POST'])
+@app.route('/admin/manage_patients', methods=['GET', 'POST'])
+def manage_patients():
+    """One page for activating and deactivating patient accounts."""
+    if 'admin' not in session:
+        flash("Unauthorized access. Please login.")
+        return redirect('/login')
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        new_status = 'active' if request.form.get('action') == 'activate' else 'deactive'
+        back = request.form.get('status', 'all')
+        if username:
+            with get_db() as conn:
+                conn.execute("UPDATE patients SET status = ? WHERE username = ?", (new_status, username))
+                conn.execute("UPDATE patient_logins SET status = ? WHERE username = ?", (new_status, username))
+            flash(f"Patient '{username}' has been {'activated' if new_status == 'active' else 'deactivated'}.", "success")
+        else:
+            flash("No patient selected.", "error")
+        return redirect(url_for('manage_patients', status=back))
+
+    status = request.args.get('status', 'all')
+    conn = get_db()
+    patients = conn.execute("SELECT * FROM patients ORDER BY id").fetchall()
+    conn.close()
+    counts = {
+        'all': len(patients),
+        'active': sum(1 for p in patients if p['status'] == 'active'),
+        'deactive': sum(1 for p in patients if p['status'] != 'active'),
+    }
+    if status == 'active':
+        patients = [p for p in patients if p['status'] == 'active']
+    elif status == 'deactive':
+        patients = [p for p in patients if p['status'] != 'active']
+    else:
+        status = 'all'
+    return render_template("manage_patients.html", patients=patients, counts=counts, status=status)
+
+
+# Old URLs keep working
+@app.route('/admin/deactivate_patients')
 def deactivate_patients():
-    if 'admin' not in session:
-        flash("Unauthorized access. Please login.")
-        return redirect('/login')
+    return redirect(url_for('manage_patients', status='active'))
 
-    conn = get_db()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
 
-    if request.method == 'POST':
-        username = request.form.get('username')
-        if username:
-            # Deactivate in patients table
-            cursor.execute("UPDATE patients SET status = 'deactive' WHERE username = ?", (username,))
-            # Deactivate in patient_logins table
-            cursor.execute("UPDATE patient_logins SET status = 'deactive' WHERE username = ?", (username,))
-            conn.commit()
-            flash(f"✅ Patient '{username}' has been deactivated.")
-        else:
-            flash("⚠️ No patient selected.")
-    
-    # Show all active patients (from patients table)
-    cursor.execute("SELECT * FROM patients WHERE status = 'active'")
-    patients = cursor.fetchall()
-    return render_template("deactivate_patients.html", patients=patients)
-
-@app.route('/admin/activate_patients', methods=['GET', 'POST'])
+@app.route('/admin/activate_patients')
 def activate_patients():
-    if 'admin' not in session:
-        flash("Unauthorized access. Please login.")
-        return redirect('/login')
-
-    conn = get_db()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    if request.method == 'POST':
-        username = request.form.get('username')
-        if username:
-            # activate in patients table
-            cursor.execute("UPDATE patients SET status = 'active' WHERE username = ?", (username,))
-            # activate in patient_logins table
-            cursor.execute("UPDATE patient_logins SET status = 'active' WHERE username = ?", (username,))
-            conn.commit()
-            flash(f"✅ Patient '{username}' has been activated.")
-        else:
-            flash("⚠️ No patient selected.")
-    
-    # Show all deactivated patients
-    cursor.execute("SELECT * FROM patients WHERE status = 'deactive'")
-    patients = cursor.fetchall()
-    return render_template("activate_patients.html", patients=patients)
+    return redirect(url_for('manage_patients', status='deactive'))
 
 @app.route('/admin/view_labadmins')
-def view_labadmins():
-    if 'admin' not in session:
-        flash("Unauthorized access. Please login to view.")
-        return redirect('/login')
-
-    conn = get_db()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT l.id, l.name, l.specialization, l.phone, log.username 
-        FROM lab_admins l
-        JOIN labadmin_logins log ON l.id = log.labadmin_id
-    """)  
-    labadmins = cursor.fetchall()
-
-    return render_template('view_labadmins.html', labadmins=labadmins)
-
-
 @app.route('/admin/delete_labadmins')
-def delete_labadmins():
-    if 'admin' not in session:
-        flash("Unauthorized access.")
-        return redirect('/login')
+def view_labadmins():
+    return redirect(url_for('manage_staff', tab='labadmins'))
 
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT l.*, lo.username, lo.password FROM lab_admins l
-        JOIN labadmin_logins lo ON l.id = lo.labadmin_id
-    """)
-    labadmins = cursor.fetchall()
-    conn.close()
-    return render_template('delete_labadmins.html', labadmins=labadmins)
 
 @app.route('/admin/delete_labadmin/<int:labadmin_id>', methods=['POST'])
 def delete_labadmin(labadmin_id):
@@ -1017,15 +997,13 @@ def delete_labadmin(labadmin_id):
         flash("Unauthorized access.")
         return redirect('/login')
 
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM labadmin_logins WHERE labadmin_id = ?", (labadmin_id,))
-    cursor.execute("DELETE FROM lab_admins WHERE id = ?", (labadmin_id,))
-    conn.commit()
-    conn.close()
+    with get_db() as conn:
+        conn.execute("DELETE FROM labadmin_logins WHERE labadmin_id = ?", (labadmin_id,))
+        conn.execute("DELETE FROM lab_admins WHERE id = ?", (labadmin_id,))
 
-    flash("Lab Admin deleted successfully.")
-    return redirect('/admin/delete_labadmins')
+    flash("Lab admin deleted successfully.", "success")
+    return redirect(url_for('manage_staff', tab='labadmins'))
+
 
 
 
@@ -1053,15 +1031,15 @@ def change_admin_password():
         conn = get_db()
         row = conn.execute("SELECT password FROM admin WHERE id = ?", (session['admin'],)).fetchone()
         if not row or not check_password_hash(row['password'], current):
-            flash("❌ Current password is incorrect.")
+            flash("Current password is incorrect.", "error")
         elif len(new) < 6:
-            flash("❌ New password must be at least 6 characters.")
+            flash("New password must be at least 6 characters.", "error")
         elif new != confirm:
-            flash("❌ New passwords do not match.")
+            flash("New passwords do not match.", "error")
         else:
             conn.execute("UPDATE admin SET password = ? WHERE id = ?", (generate_password_hash(new), session['admin']))
             conn.commit()
-            flash("✅ Password updated.")
+            flash("Password updated.", "success")
         conn.close()
         return redirect('/admin/change_password')
 
@@ -1107,9 +1085,9 @@ def upload_medical_history():
                         INSERT INTO medical_records (username, scan_and_report, normal_report, upload_date)
                         VALUES (?, ?, ?, ?)
                     """, (username, scan_and_report_url, normal_report, upload_date))
-                    flash("✅ Medical history uploaded successfully.")
+                    flash("Medical history uploaded successfully.", "success")
                 else:
-                    flash("❌ Patient username not found or patient is not active.")
+                    flash("Patient username not found or patient is not active.", "error")
 
             return redirect('/labadmin/upload')
 
@@ -1154,7 +1132,7 @@ def view_scan(record_id):
             print(f"Scan and Report URL: {scan_and_report_url}")  # Debugging
             return render_template('view_scan.html', scan_and_report_url=scan_and_report_url)
         else:
-            flash("❌ Scan and report not found.")
+            flash("Scan and report not found.", "error")
             return redirect('/labadmin')
 
 

@@ -4,23 +4,19 @@
 <div class="shell">
     <aside class="sidebar">
         <div class="group">Overview</div>
-        <a href="/admin/dashboard" class="{{ 'active' if p == '/admin/dashboard' }}"><span class="ico">📊</span> Dashboard</a>
+        <a href="/admin/dashboard" class="{{ 'active' if p == '/admin/dashboard' }}"><span class="ico">{{ icon('dashboard') }}</span> Dashboard</a>
         <div class="group">People</div>
-        <a href="/admin/view_doctors" class="{{ 'active' if p == '/admin/view_doctors' }}"><span class="ico">🩺</span> Doctors</a>
-        <a href="/admin/view_patients" class="{{ 'active' if p == '/admin/view_patients' }}"><span class="ico">🧑‍🤝‍🧑</span> Patients</a>
-        <a href="/admin/view_labadmins" class="{{ 'active' if p == '/admin/view_labadmins' }}"><span class="ico">🧪</span> Lab Admins</a>
+        <a href="/admin/staff" class="{{ 'active' if p == '/admin/staff' }}"><span class="ico">{{ icon('stethoscope') }}</span> Doctors &amp; Lab Admins</a>
+        <a href="/admin/view_patients" class="{{ 'active' if p == '/admin/view_patients' }}"><span class="ico">{{ icon('users') }}</span> Patients</a>
         <div class="group">Add</div>
-        <a href="/admin/add_doctor_form" class="{{ 'active' if 'add_doctor' in p }}"><span class="ico">➕</span> Add Doctor</a>
-        <a href="/admin/add_patient_form" class="{{ 'active' if 'add_patient' in p }}"><span class="ico">➕</span> Add Patient</a>
-        <a href="/admin/add_labadmin_form" class="{{ 'active' if 'add_labadmin' in p }}"><span class="ico">➕</span> Add Lab Admin</a>
+        <a href="/admin/add_doctor_form" class="{{ 'active' if 'add_doctor' in p }}"><span class="ico">{{ icon('plus') }}</span> Add Doctor</a>
+        <a href="/admin/add_patient_form" class="{{ 'active' if 'add_patient' in p }}"><span class="ico">{{ icon('plus') }}</span> Add Patient</a>
+        <a href="/admin/add_labadmin_form" class="{{ 'active' if 'add_labadmin' in p }}"><span class="ico">{{ icon('plus') }}</span> Add Lab Admin</a>
         <div class="group">Manage</div>
-        <a href="/admin/medical-records" class="{{ 'active' if 'medical-records' in p }}"><span class="ico">🗂️</span> Medical Records</a>
-        <a href="/admin/activate_patients" class="{{ 'active' if 'activate_patients' in p and 'deactivate' not in p }}"><span class="ico">✅</span> Activate Patients</a>
-        <a href="/admin/deactivate_patients" class="{{ 'active' if 'deactivate_patients' in p }}"><span class="ico">⛔</span> Deactivate Patients</a>
-        <a href="/admin/delete_doctors" class="{{ 'active' if 'delete_doctors' in p }}"><span class="ico">🗑️</span> Delete Doctors</a>
-        <a href="/admin/delete_labadmins" class="{{ 'active' if 'delete_labadmins' in p }}"><span class="ico">🗑️</span> Delete Lab Admins</a>
+        <a href="/admin/medical-records" class="{{ 'active' if 'medical-records' in p }}"><span class="ico">{{ icon('folder') }}</span> Medical Records</a>
+        <a href="/admin/manage_patients" class="{{ 'active' if 'manage_patients' in p }}"><span class="ico">{{ icon('user-check') }}</span> Activate / Deactivate</a>
         <div class="group">Account</div>
-        <a href="/admin/change_password" class="{{ 'active' if 'change_password' in p }}"><span class="ico">🔑</span> Change Password</a>
+        <a href="/admin/change_password" class="{{ 'active' if 'change_password' in p }}"><span class="ico">{{ icon('key') }}</span> Change Password</a>
     </aside>
     <section>{% block admin %}{% endblock %}</section>
 </div>

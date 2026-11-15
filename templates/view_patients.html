@@ -2,9 +2,9 @@
 {% from "_macros.html" import empty %}
 {% block title %}Patients{% endblock %}
 {% block admin %}
-<div class="page-head"><div><h1>Patients</h1><p><span id="n">{{ patients|length }}</span> shown</p></div><a class="btn" href="/admin/add_patient_form">＋ Add patient</a></div>
+<div class="page-head"><div><h1>Patients</h1><p><span id="n">{{ patients|length }}</span> shown</p></div><a class="btn" href="/admin/add_patient_form">{{ icon('plus') }} Add patient</a></div>
 <div class="toolbar">
-    <div class="search grow"><input type="search" placeholder="Search patients…" data-filter="#t tbody tr" data-count="#n"></div>
+    <div class="search grow">{{ icon('search') }}<input type="search" placeholder="Search patients…" data-filter="#t tbody tr" data-count="#n"></div>
     <form method="get" action="{{ url_for('view_patients') }}">
         <select name="status" onchange="this.form.submit()" style="width:auto">
             <option value="all" {{ 'selected' if selected_status == 'all' }}>All statuses</option>
@@ -21,5 +21,5 @@
         <td><span class="badge {{ 'ok' if p['status'] == 'active' else 'off' }}">{{ p['status']|capitalize }}</span></td></tr>
     {% endfor %}
     </tbody>
-</table>{% if not patients %}{{ empty('🧑‍🤝‍🧑', 'No patients found.') }}{% endif %}</div>
+</table>{% if not patients %}{{ empty(icon('users'), 'No patients found.') }}{% endif %}</div>
 {% endblock %}

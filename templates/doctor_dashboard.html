@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Doctor Dashboard{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Hello, Dr. {{ session['username'] }} 👋</h1><p>Here's your day at a glance.</p></div></div>
+<div class="page-head"><div><h1>Hello, Dr. {{ session['username'] }}</h1><p>Here's your day at a glance.</p></div></div>
 
 <div class="grid cols-4">
-    <div class="card stat"><div class="ico">📅</div><div><div class="num">{{ stats.today }}</div><div class="lbl">Appointments today</div></div></div>
-    <div class="card stat blue"><div class="ico">⏭️</div><div><div class="num">{{ stats.upcoming }}</div><div class="lbl">Upcoming booked</div></div></div>
-    <div class="card stat warn"><div class="ico">🕒</div><div><div class="num">{{ stats.open_slots }}</div><div class="lbl">Open slots</div></div></div>
-    <div class="card stat rose"><div class="ico">🧑‍🤝‍🧑</div><div><div class="num">{{ stats.patients }}</div><div class="lbl">Active patients</div></div></div>
+    <div class="card stat"><div class="ico">{{ icon('calendar') }}</div><div><div class="num">{{ stats.today }}</div><div class="lbl">Appointments today</div></div></div>
+    <div class="card stat blue"><div class="ico">{{ icon('clipboard') }}</div><div><div class="num">{{ stats.upcoming }}</div><div class="lbl">Upcoming booked</div></div></div>
+    <div class="card stat warn"><div class="ico">{{ icon('clock') }}</div><div><div class="num">{{ stats.open_slots }}</div><div class="lbl">Open slots</div></div></div>
+    <div class="card stat rose"><div class="ico">{{ icon('users') }}</div><div><div class="num">{{ stats.patients }}</div><div class="lbl">Active patients</div></div></div>
 </div>
 
 <div class="grid cols-2" style="margin-top:18px">
@@ -28,8 +28,8 @@
 </div>
 
 <div class="grid cols-3 section">
-    <a class="action-tile" href="/doctor/appointments"><span class="ico">📋</span><b>Today's appointments</b><small>See and manage today's schedule</small></a>
-    <a class="action-tile" href="/doctor/create_slot"><span class="ico">🗓️</span><b>Create / delete slots</b><small>Open up times for patients</small></a>
-    <a class="action-tile" href="/doctor/doctor_view_medical_record"><span class="ico">🗂️</span><b>Patient records</b><small>Scans and reports of active patients</small></a>
+    <a class="action-tile" href="/doctor/appointments"><span class="ico">{{ icon('clipboard') }}</span><b>Today's appointments</b><small>See and manage today's schedule</small></a>
+    <a class="action-tile" href="/doctor/create_slot"><span class="ico">{{ icon('calendar') }}</span><b>Create / delete slots</b><small>Open up times for patients</small></a>
+    <a class="action-tile" href="/doctor/doctor_view_medical_record"><span class="ico">{{ icon('folder') }}</span><b>Patient records</b><small>Scans and reports of active patients</small></a>
 </div>
 {% endblock %}

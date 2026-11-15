@@ -11,15 +11,15 @@
 </section>
 
 <section class="grid cols-3 section">
-    <div class="card"><h3>📅 Easy booking</h3><p class="muted">Pick a doctor, choose a free slot and you're done. Cancel any time up to 30 minutes before.</p></div>
-    <div class="card"><h3>🗂️ Digital records</h3><p class="muted">Scans and reports are stored securely and visible to you and your care team.</p></div>
-    <div class="card"><h3>🔒 Role-based access</h3><p class="muted">Admins, doctors, lab staff and patients each see only what they need.</p></div>
+    <div class="card"><h3>{{ icon('calendar') }} Easy booking</h3><p class="muted">Pick a doctor, choose a free slot and you're done. Cancel any time up to 30 minutes before.</p></div>
+    <div class="card"><h3>{{ icon('folder') }} Digital records</h3><p class="muted">Scans and reports are stored securely and visible to you and your care team.</p></div>
+    <div class="card"><h3>{{ icon('lock') }} Role-based access</h3><p class="muted">Admins, doctors, lab staff and patients each see only what they need.</p></div>
 </section>
 
 <section class="section" id="doctors">
     <div class="page-head">
         <div><h2>Our doctors</h2><p><span id="doc-count">{{ doctors|length }}</span> specialists available</p></div>
-        <div class="search" style="min-width:260px"><input type="search" placeholder="Search by name or specialty…"
+        <div class="search" style="min-width:260px">{{ icon('search') }}<input type="search" placeholder="Search by name or specialty…"
              data-filter=".doc-card" data-count="#doc-count"></div>
     </div>
     {% set specs = doctors|map(attribute=1)|unique|list %}
@@ -32,14 +32,14 @@
     <div class="grid auto">
         {% for d in doctors %}
         <div class="card doc-card" data-spec="{{ d[1] }}">
-            <div class="pic">{{ '👩‍⚕️' if d[3]|lower == 'female' else '👨‍⚕️' }}</div>
+            <div class="pic">{{ icon('user') if d[3]|lower == 'female' else icon('user') }}</div>
             <h3>Dr. {{ d[0] }}</h3>
             <div class="muted">{{ d[1] }}</div>
             <div class="doc-meta"><span class="badge teal">{{ d[2] }} yrs experience</span><span class="badge">{{ d[3]|capitalize }}</span></div>
             <a class="btn sm secondary" href="/login">Book appointment</a>
         </div>
         {% else %}
-        <div class="card" style="grid-column:1/-1">{% from "_macros.html" import empty %}{{ empty('🩺', 'Doctors will appear here once they are added.') }}</div>
+        <div class="card" style="grid-column:1/-1">{% from "_macros.html" import empty %}{{ empty(icon('stethoscope'), 'Doctors will appear here once they are added.') }}</div>
         {% endfor %}
     </div>
 </section>

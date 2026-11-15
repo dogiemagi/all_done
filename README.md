@@ -46,6 +46,9 @@ This project enables secure appointment booking, medical record uploads, and hos
 
 ## What's new (UI refresh)
 
+- **Visit notes**: doctors add notes to today's appointments; patients see them under past appointments.
+- **Change password** for doctors, patients and lab admins (key icon in the navbar).
+- **CSV export** of patients, doctors and appointments for admins (`/admin/export/<patients|doctors|appointments>.csv`).
 - Brand-new design system (`static/style.css`) with **light / dark mode** (toggle in the navbar, remembered per browser) and a fully responsive layout.
 - All pages share one `base.html` layout; admin pages share a sidebar layout (`admin_base.html`).
 - **Admin dashboard** with live stats and a doctors-by-specialty chart, plus a working **Change Password** page.

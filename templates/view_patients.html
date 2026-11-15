@@ -2,7 +2,7 @@
 {% from "_macros.html" import empty %}
 {% block title %}Patients{% endblock %}
 {% block admin %}
-<div class="page-head"><div><h1>Patients</h1><p><span id="n">{{ patients|length }}</span> shown</p></div><a class="btn" href="/admin/add_patient_form">{{ icon('plus') }} Add patient</a></div>
+<div class="page-head"><div><h1>Patients</h1><p><span id="n">{{ patients|length }}</span> shown</p></div><div style="display:flex;gap:8px"><a class="btn secondary" href="/admin/export/patients.csv">Export CSV</a><a class="btn" href="/admin/add_patient_form">{{ icon('plus') }} Add patient</a></div></div>
 <div class="toolbar">
     <div class="search grow">{{ icon('search') }}<input type="search" placeholder="Search patients…" data-filter="#t tbody tr" data-count="#n"></div>
     <form method="get" action="{{ url_for('view_patients') }}">

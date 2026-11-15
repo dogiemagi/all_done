@@ -40,6 +40,7 @@
         <div class="info"><b>Dr. {{ a.doctor }}</b><span class="muted">{{ a.specialization }} · {{ a.when.split(',')[1]|trim }}</span></div>
         <span class="badge ok">Completed</span>
     </div>
+    {% if a.notes %}<p class="muted" style="margin:-4px 0 12px 64px;font-size:.88rem"><b>Doctor's notes:</b> {{ a.notes }}</p>{% endif %}
     {% endfor %}
 </div>
 {% endif %}

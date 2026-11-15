@@ -42,6 +42,7 @@
         <div class="nav-right">
             <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">{{ icon('moon') }}</button>
             {% if role %}
+                {% if role != 'admin' %}<a class="icon-btn" href="/account/password" title="Change password" aria-label="Change password">{{ icon('key') }}</a>{% endif %}
                 <div class="user-chip"><span class="avatar">{{ (who or '?')[0] }}</span><span class="name">{{ who }}</span></div>
                 <a class="btn secondary sm" href="/logout">Logout</a>
             {% else %}

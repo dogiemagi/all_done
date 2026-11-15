@@ -3,7 +3,7 @@ import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from io import BytesIO
+from io import BytesIO, StringIO
 from db import get_db, initialize_db
 from datetime import datetime, timedelta
 import uuid
@@ -338,7 +338,7 @@ def doctor_appointments():
     today = datetime.now().strftime('%Y-%m-%d')
 
     rows = conn.execute('''
-        SELECT a.slot_id, s.slot_datetime, p.name AS patient_name, p.username AS patient_username
+        SELECT a.slot_id, a.notes, s.slot_datetime, p.name AS patient_name, p.username AS patient_username
         FROM appointments a
         JOIN doctor_slots s ON a.slot_id = s.slot_id
         JOIN patients p ON a.patient_username = p.username
@@ -354,13 +354,62 @@ def doctor_appointments():
             'slot_id': row['slot_id'],
             'slot_datetime': formatted_datetime,
             'patient_name': row['patient_name'],
-            'patient_username': row['patient_username']
+            'patient_username': row['patient_username'],
+            'notes': row['notes'] or ''
         })
-
-    if not appointments:
-        flash("ℹ️ No appointments for today.")  
+    conn.close()
+    appointments.sort(key=lambda a: datetime.strptime(a['slot_datetime'], '%d %b %Y, %I:%M %p'))
 
     return render_template('appointments.html', appointments=appointments)
+
+
+@app.route('/doctor/appointment_notes/<int:slot_id>', methods=['POST'])
+def save_appointment_notes(slot_id):
+    if session.get('role') != 'doctor':
+        return redirect(url_for('login'))
+    notes = request.form.get('notes', '').strip()[:1000]
+    conn = get_db()
+    cur = conn.execute('''UPDATE appointments SET notes = ? WHERE slot_id = ? AND doctor_username = ?''',
+                       (notes or None, slot_id, session['username']))
+    conn.commit()
+    conn.close()
+    flash("Visit notes saved." if cur.rowcount else "Appointment not found.", "success" if cur.rowcount else "error")
+    return redirect(url_for('doctor_appointments'))
+
+
+@app.route('/account/password', methods=['GET', 'POST'])
+def account_password():
+    """Self-service password change for doctor / patient / lab admin."""
+    role = session.get('role')
+    tables = {
+        'doctor': [('doctor_logins', 'doctor_id')],
+        'patient': [('patient_logins', 'patient_id')],
+        'labadmin': [('lab_admins', 'id'), ('labadmin_logins', 'labadmin_id')],
+    }
+    if role not in tables:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        current = request.form.get('current_password', '')
+        new = request.form.get('new_password', '')
+        confirm = request.form.get('confirm_password', '')
+        conn = get_db()
+        main_table, key = tables[role][0]
+        row = conn.execute(f"SELECT password FROM {main_table} WHERE {key} = ?", (session['user_id'],)).fetchone()
+        if not row or not check_password_hash(row['password'], current):
+            flash("Current password is incorrect.", "error")
+        elif len(new) < 6:
+            flash("New password must be at least 6 characters.", "error")
+        elif new != confirm:
+            flash("New passwords do not match.", "error")
+        else:
+            hashed = generate_password_hash(new)
+            for t, k in tables[role]:
+                conn.execute(f"UPDATE {t} SET password = ? WHERE {k} = ?", (hashed, session['user_id']))
+            conn.commit()
+            flash("Password updated.", "success")
+        conn.close()
+        return redirect(url_for('account_password'))
+    return render_template('account_password.html')
     
 @app.route('/doctor/delete_appointment/<int:slot_id>', methods=['POST'])
 def delete_appointment(slot_id):
@@ -389,7 +438,7 @@ def user_dashboard():
     if 'role' in session and session['role'] == 'patient':
         conn = get_db()
         rows = conn.execute('''
-            SELECT a.slot_id, s.slot_datetime, a.doctor_username, a.specialization, d.name AS doctor_name
+            SELECT a.slot_id, a.notes, s.slot_datetime, a.doctor_username, a.specialization, d.name AS doctor_name
             FROM appointments a
             JOIN doctor_slots s ON a.slot_id = s.slot_id
             LEFT JOIN doctors d ON d.username = a.doctor_username
@@ -407,6 +456,7 @@ def user_dashboard():
                 'when': fmt_slot(r['slot_datetime']),
                 'doctor': r['doctor_name'] or r['doctor_username'],
                 'specialization': r['specialization'],
+                'notes': r['notes'],
                 'cancellable': False,
             }
             if r['slot_datetime'] >= now:
@@ -899,6 +949,35 @@ def delete_doctor(doctor_id):
     flash("Doctor deleted successfully.", "success")
     return redirect(url_for('manage_staff', tab='doctors'))
 
+
+
+@app.route('/admin/export/<kind>.csv')
+def admin_export(kind):
+    if 'admin' not in session:
+        return redirect('/login')
+    queries = {
+        'patients': "SELECT id, name, age, gender, contact, username, status FROM patients ORDER BY id",
+        'doctors': "SELECT id, name, gender, specialization, experience, contact, username FROM doctors ORDER BY id",
+        'appointments': '''SELECT a.appointment_id, s.slot_datetime, a.doctor_username, a.patient_username, a.specialization
+                           FROM appointments a JOIN doctor_slots s ON a.slot_id = s.slot_id ORDER BY s.slot_datetime''',
+    }
+    if kind not in queries:
+        return redirect('/admin/dashboard')
+    import csv
+    conn = get_db()
+    cur = conn.execute(queries[kind])
+    headers = [c[0] for c in cur.description]
+    rows = cur.fetchall()
+    conn.close()
+    buf = StringIO()
+    w = csv.writer(buf)
+    w.writerow(headers)
+    for r in rows:
+        # Guard against spreadsheet formula injection
+        w.writerow([("'" + str(v)) if isinstance(v, str) and v[:1] in '=+-@' else v for v in tuple(r)])
+    resp = app.response_class(buf.getvalue(), mimetype='text/csv')
+    resp.headers['Content-Disposition'] = f'attachment; filename={kind}.csv'
+    return resp
 
 
 @app.route('/admin/view_patients', methods=['GET'])

@@ -110,5 +110,10 @@ def initialize_db():
         default_admin = ('admin', generate_password_hash('admin123'))
         cursor.execute("INSERT INTO admin (username, password) VALUES (?, ?)", default_admin)
 
+    # Lightweight migration: doctor visit notes on appointments
+    cols = [r['name'] for r in cursor.execute("PRAGMA table_info(appointments)").fetchall()]
+    if 'notes' not in cols:
+        cursor.execute("ALTER TABLE appointments ADD COLUMN notes TEXT")
+
     conn.commit()
     conn.close()

@@ -5,6 +5,7 @@
 <div class="page-head">
     <div><h1>Doctors &amp; lab admins</h1><p>View, search and remove staff accounts.</p></div>
     {% if tab == 'doctors' %}
+    <a class="btn secondary" href="/admin/export/doctors.csv">Export CSV</a>
     <a class="btn" href="/admin/add_doctor_form">{{ icon('plus') }} Add doctor</a>
     {% else %}
     <a class="btn" href="/admin/add_labadmin_form">{{ icon('plus') }} Add lab admin</a>
